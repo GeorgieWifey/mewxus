@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mewxus 🐾 Nexus 61S Pastel WebHID Driver</title>
+  <title>Mewxus - Nexus 61S Pastel WebHID Driver</title>
   <meta name="description" content="A cute pastel pixel-art WebHID driver and configurator for the Yodall Nexus 61S keyboard.">
   <meta name="csrf-token" content="{{ csrf_token() }}">
 
-  <!-- Catppuccin Latte favicon placeholder -->
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐾</text></svg>">
+  <!-- Pixel Art SVG Favicon -->
+  <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
 
   @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="bg-latte-mantle text-latte-text font-sans antialiased selection:bg-latte-pink selection:text-white"
+<body class="bg-latte-mantle text-latte-text font-pixel antialiased selection:bg-latte-pink selection:text-white"
       x-data="keyboardDriver()"
       x-cloak>
 
@@ -88,8 +88,8 @@
             </span>
           </div>
           <!-- Mascot Speech bubble -->
-          <div class="mt-0.5 flex items-center gap-1.5 text-xs text-latte-subtext0 bg-latte-mantle px-2 py-0.5 border border-latte-surface1">
-            <span class="text-latte-mauve font-bold">💬</span>
+          <div class="mt-0.5 flex items-center gap-1.5 text-[10px] text-latte-subtext0 bg-latte-mantle px-2 py-0.5 border border-latte-surface1 font-pixel">
+            <x-pixel-icon name="message-text" class="w-3.5 h-3.5 text-latte-mauve" />
             <span class="truncate max-w-[260px] md:max-w-md" x-text="mascotSpeech"></span>
           </div>
         </div>
@@ -103,13 +103,13 @@
                     @click="connectWebHID()"
                     :disabled="isConnecting"
                     class="pixel-btn-primary flex items-center gap-1.5">
-              <span>🔌</span>
+              <x-pixel-icon name="power" class="w-3.5 h-3.5" />
               <span x-text="isConnecting ? 'CONNECTING...' : 'CONNECT WEBHID'"></span>
             </button>
             <button type="button"
                     @click="enableDemoMode()"
                     class="pixel-btn-accent flex items-center gap-1.5">
-              <span>🎮</span>
+              <x-pixel-icon name="gamepad" class="w-3.5 h-3.5" />
               <span>TRY DEMO MODE</span>
             </button>
           </div>
@@ -123,8 +123,9 @@
             </div>
             <button type="button"
                     @click="disconnect()"
-                    class="pixel-btn-secondary text-[11px] flex items-center gap-1">
-              <span>✕</span> DISCONNECT
+                    class="pixel-btn-secondary text-[10px] flex items-center gap-1">
+              <x-pixel-icon name="close" class="w-3 h-3" />
+              <span>DISCONNECT</span>
             </button>
           </div>
         </template>
@@ -139,11 +140,11 @@
       <div class="flex flex-wrap items-center justify-between gap-3 border-b-2 border-latte-surface1 pb-3">
         <!-- Layer Selector Tabs -->
         <div class="flex items-center gap-1">
-          <span class="font-pixel text-xs text-latte-subtext0 mr-1 hidden sm:inline">LAYER:</span>
+          <span class="font-pixel text-[10px] text-latte-subtext0 mr-1 hidden sm:inline">LAYER:</span>
           <template x-for="l in [0, 1, 2, 3]" :key="l">
             <button type="button"
                     @click="switchLayer(l)"
-                    class="pixel-btn text-xs px-2.5 py-1"
+                    class="pixel-btn text-[10px] px-2.5 py-1"
                     :class="activeLayer === l ? 'bg-latte-mauve text-latte-base shadow-[1px_1px_0_0_#4c4f69]' : 'bg-latte-surface0 text-latte-text hover:bg-latte-surface1'"
                     x-text="l === 0 ? 'L0 (BASE)' : 'L' + l + ' (FN' + l + ')'">
             </button>
@@ -154,7 +155,7 @@
         <div class="flex items-center gap-3 text-xs">
           <!-- Live travel indicator badge -->
           <div class="flex items-center gap-1 font-pixel text-[10px] bg-latte-mantle px-2 py-1 border border-latte-text">
-            <span class="inline-block w-2 h-2 rounded-full"
+            <span class="inline-block w-2 h-2"
                   :class="Object.keys(pressedKeys).length > 0 ? 'bg-latte-green animate-ping' : 'bg-latte-surface1'"></span>
             <span x-text="Object.keys(pressedKeys).length > 0 ? 'ACTUATION DETECTED' : 'AWAITING KEYPRESS'"></span>
           </div>
@@ -203,17 +204,17 @@
                       <div class="flex justify-between items-start w-full">
                         <span class="font-pixel text-[10px] font-bold leading-tight truncate"
                               x-text="layers[activeLayer][idx]?.name || k.name"></span>
-                        <span class="text-[8px] opacity-40 font-mono" x-text="idx"></span>
+                        <span class="text-[8px] opacity-40 font-mono" x-text="layers[activeLayer][idx]?.slotIndex ?? idx"></span>
                       </div>
 
                       <!-- Keycap bottom info (Live Travel Depth mm if pressed) -->
                       <div class="flex justify-between items-end w-full text-[8px]">
                         <template x-if="pressedKeys[idx] !== undefined">
-                          <span class="font-pixel text-white font-bold bg-latte-red px-1 rounded-none"
+                          <span class="font-pixel text-white font-bold bg-latte-red px-1"
                                 x-text="(pressedKeys[idx]).toFixed(1) + 'mm'"></span>
                         </template>
                         <template x-if="pressedKeys[idx] === undefined">
-                          <span class="text-latte-subtext1 text-[7px]" x-text="'#' + k.code"></span>
+                          <span class="text-latte-subtext1 text-[7px]" x-text="'#' + (layers[activeLayer][idx]?.code ?? k.code)"></span>
                         </template>
                       </div>
                     </button>
@@ -232,19 +233,20 @@
           <span class="font-pixel text-[10px] text-latte-subtext0">SELECTED KEY:</span>
           <template x-if="selectedKeyIndex !== null">
             <span class="font-pixel text-xs text-latte-mauve font-bold"
-                  x-text="'[' + (layers[activeLayer][selectedKeyIndex]?.name || layoutKeys[selectedKeyIndex]?.name) + '] (Slot #' + selectedKeyIndex + ')'">
+                  x-text="'[' + (layers[activeLayer][selectedKeyIndex]?.name || layoutKeys[selectedKeyIndex]?.name) + '] (Slot #' + (layers[activeLayer][selectedKeyIndex]?.slotIndex ?? selectedKeyIndex) + ')'">
             </span>
           </template>
           <template x-if="selectedKeyIndex === null">
-            <span class="text-latte-subtext1 italic">Click any key above to inspect or remap</span>
+            <span class="text-latte-subtext1 text-[10px]">Click any key above to inspect or remap</span>
           </template>
         </div>
 
         <div class="flex items-center gap-2">
           <button type="button"
                   @click="syncKeymap()"
-                  class="pixel-btn-primary text-[10px] px-2.5 py-1">
-            💾 SYNC LAYER TO KEYBOARD
+                  class="pixel-btn-primary text-[10px] px-2.5 py-1 flex items-center gap-1">
+            <x-pixel-icon name="save" class="w-3.5 h-3.5" />
+            <span>SYNC LAYER TO KEYBOARD</span>
           </button>
         </div>
       </div>
@@ -258,51 +260,58 @@
       <nav class="flex flex-wrap items-center gap-2 border-b-2 border-latte-surface1 pb-3">
         <button type="button"
                 @click="activeTab = 'keymap'"
-                class="pixel-btn text-xs flex items-center gap-1.5"
+                class="pixel-btn text-[10px] flex items-center gap-1.5"
                 :class="activeTab === 'keymap' ? 'pixel-btn-primary' : 'pixel-btn-secondary'">
-          <span>⌨️</span> KEYMAP
+          <x-pixel-icon name="keyboard" class="w-3.5 h-3.5" />
+          <span>KEYMAP</span>
         </button>
 
         <button type="button"
                 @click="activeTab = 'lighting'"
-                class="pixel-btn text-xs flex items-center gap-1.5"
+                class="pixel-btn text-[10px] flex items-center gap-1.5"
                 :class="activeTab === 'lighting' ? 'pixel-btn-primary' : 'pixel-btn-secondary'">
-          <span>✨</span> LIGHTING (RGB)
+          <x-pixel-icon name="sun" class="w-3.5 h-3.5" />
+          <span>LIGHTING</span>
         </button>
 
         <button type="button"
                 @click="activeTab = 'rapid_trigger'"
-                class="pixel-btn text-xs flex items-center gap-1.5"
+                class="pixel-btn text-[10px] flex items-center gap-1.5"
                 :class="activeTab === 'rapid_trigger' ? 'pixel-btn-primary' : 'pixel-btn-secondary'">
-          <span>⚡</span> RAPID TRIGGER
+          <x-pixel-icon name="zap" class="w-3.5 h-3.5" />
+          <span>RAPID TRIGGER</span>
         </button>
 
         <button type="button"
                 @click="activeTab = 'macros'"
-                class="pixel-btn text-xs flex items-center gap-1.5"
+                class="pixel-btn text-[10px] flex items-center gap-1.5"
                 :class="activeTab === 'macros' ? 'pixel-btn-primary' : 'pixel-btn-secondary'">
-          <span>📜</span> MACROS
+          <x-pixel-icon name="script" class="w-3.5 h-3.5" />
+          <span>MACROS</span>
         </button>
 
         <button type="button"
                 @click="activeTab = 'presets'"
-                class="pixel-btn text-xs flex items-center gap-1.5"
+                class="pixel-btn text-[10px] flex items-center gap-1.5"
                 :class="activeTab === 'presets' ? 'pixel-btn-primary' : 'pixel-btn-secondary'">
-          <span>🌸</span> PRESETS
+          <x-pixel-icon name="folder" class="w-3.5 h-3.5" />
+          <span>PRESETS</span>
         </button>
 
         <button type="button"
                 @click="activeTab = 'settings'"
-                class="pixel-btn text-xs flex items-center gap-1.5"
+                class="pixel-btn text-[10px] flex items-center gap-1.5"
                 :class="activeTab === 'settings' ? 'pixel-btn-primary' : 'pixel-btn-secondary'">
-          <span>⚙️</span> SETTINGS
+          <x-pixel-icon name="sliders" class="w-3.5 h-3.5" />
+          <span>SETTINGS</span>
         </button>
 
         <button type="button"
                 @click="activeTab = 'firmware'"
-                class="pixel-btn text-xs flex items-center gap-1.5"
+                class="pixel-btn text-[10px] flex items-center gap-1.5"
                 :class="activeTab === 'firmware' ? 'pixel-btn-primary' : 'pixel-btn-secondary'">
-          <span>📦</span> FIRMWARE
+          <x-pixel-icon name="cpu" class="w-3.5 h-3.5" />
+          <span>FIRMWARE</span>
         </button>
       </nav>
 
@@ -314,7 +323,7 @@
             <template x-for="(catKeys, catName) in keyCategories" :key="catName">
               <button type="button"
                       @click="selectedCategory = catName"
-                      class="pixel-btn text-[10px] px-2.5 py-1 capitalize"
+                      class="pixel-btn text-[10px] px-2.5 py-1 uppercase"
                       :class="selectedCategory === catName ? 'bg-latte-mauve text-latte-base' : 'bg-latte-surface0 text-latte-text hover:bg-latte-surface1'"
                       x-text="catName">
               </button>
@@ -325,8 +334,8 @@
           <div class="relative w-full md:w-64">
             <input type="text"
                    x-model="searchQuery"
-                   placeholder="Search key name or code..."
-                   class="w-full px-3 py-1.5 text-xs bg-latte-mantle border-2 border-latte-text shadow-[2px_2px_0_0_#4c4f69] outline-none font-pixel">
+                   placeholder="SEARCH KEY OR CODE..."
+                   class="w-full px-3 py-1.5 text-[10px] bg-latte-mantle border-2 border-latte-text shadow-[2px_2px_0_0_#4c4f69] outline-none font-pixel uppercase">
           </div>
         </div>
 
@@ -336,7 +345,7 @@
             <button type="button"
                     @click="assignKeycode(kc.code, kc.type)"
                     class="pixel-box bg-latte-base hover:bg-latte-pink hover:text-white p-2 text-center transition-colors cursor-pointer flex flex-col items-center justify-center">
-              <span class="font-pixel text-xs font-bold truncate max-w-full" x-text="kc.name"></span>
+              <span class="font-pixel text-[10px] font-bold truncate max-w-full" x-text="kc.name"></span>
               <span class="text-[8px] opacity-50" x-text="'code ' + kc.code"></span>
             </button>
           </template>
@@ -354,7 +363,7 @@
               <template x-for="eff in lightingEffects" :key="eff.value">
                 <button type="button"
                         @click="lighting.effect = eff.value; updateLighting()"
-                        class="text-left px-3 py-1.5 text-xs font-pixel border transition-colors flex items-center justify-between"
+                        class="text-left px-3 py-1.5 text-[10px] font-pixel border transition-colors flex items-center justify-between"
                         :class="lighting.effect === eff.value ? 'bg-latte-mauve text-latte-base border-latte-text' : 'bg-latte-base text-latte-text border-latte-surface1 hover:border-latte-mauve'">
                   <span x-text="eff.name"></span>
                   <span class="text-[9px] opacity-60" x-text="eff.zhName"></span>
@@ -369,7 +378,7 @@
 
             <!-- Brightness -->
             <div class="flex flex-col gap-1">
-              <div class="flex justify-between text-xs font-pixel">
+              <div class="flex justify-between text-[10px] font-pixel">
                 <span>BRIGHTNESS</span>
                 <span class="text-latte-mauve" x-text="lighting.brightness + '%'"></span>
               </div>
@@ -383,7 +392,7 @@
 
             <!-- Speed -->
             <div class="flex flex-col gap-1">
-              <div class="flex justify-between text-xs font-pixel">
+              <div class="flex justify-between text-[10px] font-pixel">
                 <span>SPEED</span>
                 <span class="text-latte-teal" x-text="lighting.speed + '%'"></span>
               </div>
@@ -397,7 +406,7 @@
 
             <!-- Direction -->
             <div class="flex flex-col gap-1">
-              <span class="text-xs font-pixel">DIRECTION</span>
+              <span class="text-[10px] font-pixel">DIRECTION</span>
               <div class="grid grid-cols-2 gap-2 mt-1">
                 <button type="button"
                         @click="lighting.direction = 0; updateLighting()"
@@ -420,18 +429,18 @@
             <h3 class="font-pixel text-xs text-latte-mauve font-bold">CATPPUCCIN PALETTE</h3>
             
             <div class="grid grid-cols-4 gap-2">
-              <button type="button" @click="setLightingColor('#ea76cb')" class="h-10 pixel-box bg-latte-pink flex items-center justify-center font-pixel text-[9px] text-white" title="Pink">PINK</button>
-              <button type="button" @click="setLightingColor('#8839ef')" class="h-10 pixel-box bg-latte-mauve flex items-center justify-center font-pixel text-[9px] text-white" title="Mauve">MAUVE</button>
-              <button type="button" @click="setLightingColor('#dc8a78')" class="h-10 pixel-box bg-latte-rosewater flex items-center justify-center font-pixel text-[9px] text-latte-text" title="Rosewater">ROSE</button>
-              <button type="button" @click="setLightingColor('#dd7878')" class="h-10 pixel-box bg-latte-flamingo flex items-center justify-center font-pixel text-[9px] text-white" title="Flamingo">FLAMINGO</button>
-              <button type="button" @click="setLightingColor('#fe640b')" class="h-10 pixel-box bg-latte-peach flex items-center justify-center font-pixel text-[9px] text-white" title="Peach">PEACH</button>
-              <button type="button" @click="setLightingColor('#40a02b')" class="h-10 pixel-box bg-latte-green flex items-center justify-center font-pixel text-[9px] text-white" title="Green">GREEN</button>
-              <button type="button" @click="setLightingColor('#179299')" class="h-10 pixel-box bg-latte-teal flex items-center justify-center font-pixel text-[9px] text-white" title="Teal">TEAL</button>
-              <button type="button" @click="setLightingColor('#7287fd')" class="h-10 pixel-box bg-latte-lavender flex items-center justify-center font-pixel text-[9px] text-white" title="Lavender">LAVENDER</button>
+              <button type="button" @click="setLightingColor('#ea76cb')" class="h-10 pixel-box bg-latte-pink flex items-center justify-center font-pixel text-[9px] text-white">PINK</button>
+              <button type="button" @click="setLightingColor('#8839ef')" class="h-10 pixel-box bg-latte-mauve flex items-center justify-center font-pixel text-[9px] text-white">MAUVE</button>
+              <button type="button" @click="setLightingColor('#dc8a78')" class="h-10 pixel-box bg-latte-rosewater flex items-center justify-center font-pixel text-[9px] text-latte-text">ROSE</button>
+              <button type="button" @click="setLightingColor('#dd7878')" class="h-10 pixel-box bg-latte-flamingo flex items-center justify-center font-pixel text-[9px] text-white">FLAMINGO</button>
+              <button type="button" @click="setLightingColor('#fe640b')" class="h-10 pixel-box bg-latte-peach flex items-center justify-center font-pixel text-[9px] text-white">PEACH</button>
+              <button type="button" @click="setLightingColor('#40a02b')" class="h-10 pixel-box bg-latte-green flex items-center justify-center font-pixel text-[9px] text-white">GREEN</button>
+              <button type="button" @click="setLightingColor('#179299')" class="h-10 pixel-box bg-latte-teal flex items-center justify-center font-pixel text-[9px] text-white">TEAL</button>
+              <button type="button" @click="setLightingColor('#7287fd')" class="h-10 pixel-box bg-latte-lavender flex items-center justify-center font-pixel text-[9px] text-white">LAVENDER</button>
             </div>
 
-            <div class="mt-2 p-2 bg-latte-base border border-latte-surface1 text-xs text-latte-subtext0">
-              <p>💡 Tip: For <strong>Custom Per-Key mode (Mode 0)</strong>, pick a color chip above and click any key on the visual keyboard to paint it!</p>
+            <div class="mt-2 p-2 bg-latte-base border border-latte-surface1 text-[10px] text-latte-subtext0">
+              <p>INFO: In <strong>Custom Per-Key mode</strong> (Effect 0), select a color above then click any keycap on the board to apply.</p>
             </div>
           </div>
 
@@ -448,7 +457,7 @@
             
             <!-- Global Initial Travel -->
             <div class="flex flex-col gap-1">
-              <div class="flex justify-between text-xs font-pixel">
+              <div class="flex justify-between text-[10px] font-pixel">
                 <span>INITIAL ACTUATION DEPTH</span>
                 <span class="text-latte-red font-bold" x-text="rapidTrigger.globalActuation.toFixed(1) + ' mm'"></span>
               </div>
@@ -459,12 +468,12 @@
                      x-model.number="rapidTrigger.globalActuation"
                      @change="updateRapidTrigger()"
                      class="pixel-slider">
-              <p class="text-[10px] text-latte-subtext1">Travel distance before key registers down (0.1mm - 4.0mm).</p>
+              <p class="text-[9px] text-latte-subtext1">Travel distance before key registers down (0.1mm - 4.0mm).</p>
             </div>
 
             <!-- RT Press Sensitivity -->
             <div class="flex flex-col gap-1">
-              <div class="flex justify-between text-xs font-pixel">
+              <div class="flex justify-between text-[10px] font-pixel">
                 <span>RAPID TRIGGER PRESS SENSITIVITY</span>
                 <span class="text-latte-peach font-bold" x-text="rapidTrigger.globalPressSensitivity.toFixed(2) + ' mm'"></span>
               </div>
@@ -479,7 +488,7 @@
 
             <!-- RT Release Sensitivity -->
             <div class="flex flex-col gap-1">
-              <div class="flex justify-between text-xs font-pixel">
+              <div class="flex justify-between text-[10px] font-pixel">
                 <span>RAPID TRIGGER RELEASE SENSITIVITY</span>
                 <span class="text-latte-teal font-bold" x-text="rapidTrigger.globalReleaseSensitivity.toFixed(2) + ' mm'"></span>
               </div>
@@ -493,7 +502,7 @@
             </div>
 
             <!-- Continuous RT Toggle -->
-            <label class="flex items-center gap-2 cursor-pointer font-pixel text-xs mt-1">
+            <label class="flex items-center gap-2 cursor-pointer font-pixel text-[10px] mt-1">
               <input type="checkbox"
                      x-model="rapidTrigger.continuousRapidTrigger"
                      @change="updateRapidTrigger()"
@@ -506,7 +515,7 @@
           <div class="pixel-box bg-latte-mantle p-4 flex flex-col justify-between gap-4">
             <div>
               <h3 class="font-pixel text-xs text-latte-mauve font-bold mb-2">LIVE MAGNETIC TRAVEL GAUGE</h3>
-              <p class="text-xs text-latte-subtext0 mb-4">
+              <p class="text-[10px] text-latte-subtext0 mb-4">
                 Press any key on your keyboard to observe the real-time magnetic Hall sensor depth streamed via packet <code class="bg-latte-base px-1 border border-latte-surface1">0xA0</code>.
               </p>
               
@@ -514,7 +523,7 @@
               <div class="flex flex-col gap-2 max-h-48 overflow-y-auto">
                 <template x-for="(depth, kIdx) in pressedKeys" :key="kIdx">
                   <div class="p-2 bg-latte-base border border-latte-text flex flex-col gap-1">
-                    <div class="flex justify-between text-[11px] font-pixel">
+                    <div class="flex justify-between text-[10px] font-pixel">
                       <span x-text="'Key #' + kIdx + ' [' + (layers[activeLayer][kIdx]?.name || 'Key') + ']'"></span>
                       <span class="text-latte-mauve font-bold" x-text="depth.toFixed(2) + ' mm / 4.0 mm'"></span>
                     </div>
@@ -527,10 +536,10 @@
                 </template>
 
                 <template x-if="Object.keys(pressedKeys).length === 0">
-                  <div class="p-6 text-center border-2 border-dashed border-latte-surface1">
-                    <span class="text-2xl">⌨️</span>
-                    <p class="font-pixel text-[10px] text-latte-subtext1 mt-2">NO KEYS CURRENTLY DEPRESSED</p>
-                    <p class="text-xs text-latte-subtext0 mt-1">Press any physical switch to see real-time Hall sensor actuation!</p>
+                  <div class="p-6 text-center border-2 border-dashed border-latte-surface1 flex flex-col items-center justify-center gap-2">
+                    <x-pixel-icon name="keyboard" class="w-8 h-8 text-latte-subtext1" />
+                    <p class="font-pixel text-[10px] text-latte-subtext1">NO KEYS CURRENTLY DEPRESSED</p>
+                    <p class="text-[9px] text-latte-subtext0">Press any physical switch to see real-time Hall sensor actuation</p>
                   </div>
                 </template>
               </div>
@@ -539,8 +548,9 @@
             <div class="pt-3 border-t border-latte-surface1 flex justify-end">
               <button type="button"
                       @click="updateRapidTrigger()"
-                      class="pixel-btn-primary text-xs">
-                ⚡ APPLY RAPID TRIGGER SETTINGS
+                      class="pixel-btn-primary text-[10px] flex items-center gap-1.5">
+                <x-pixel-icon name="zap" class="w-3.5 h-3.5" />
+                <span>APPLY RAPID TRIGGER</span>
               </button>
             </div>
           </div>
@@ -558,7 +568,7 @@
               <template x-for="(m, mIdx) in macros" :key="mIdx">
                 <button type="button"
                         @click="activeMacroSlot = mIdx"
-                        class="text-left px-2.5 py-1 text-xs font-pixel border flex justify-between"
+                        class="text-left px-2.5 py-1 text-[10px] font-pixel border flex justify-between"
                         :class="activeMacroSlot === mIdx ? 'bg-latte-mauve text-latte-base border-latte-text' : 'bg-latte-base text-latte-text border-latte-surface1 hover:border-latte-mauve'">
                   <span x-text="m.name"></span>
                   <span class="text-[9px] opacity-60" x-text="m.actions.length + ' acts'"></span>
@@ -572,10 +582,10 @@
             <div>
               <div class="flex items-center justify-between mb-3 border-b border-latte-surface1 pb-2">
                 <div class="flex items-center gap-2">
-                  <h4 class="font-pixel text-xs font-bold" x-text="'EDITING ' + macros[activeMacroSlot].name"></h4>
+                  <h4 class="font-pixel text-[10px] font-bold" x-text="'EDITING ' + macros[activeMacroSlot].name"></h4>
                   <input type="text"
                          x-model="macros[activeMacroSlot].name"
-                         class="px-2 py-0.5 text-xs bg-latte-base border border-latte-text font-pixel">
+                         class="px-2 py-0.5 text-[10px] bg-latte-base border border-latte-text font-pixel">
                 </div>
                 <div class="flex items-center gap-1">
                   <button type="button"
@@ -598,10 +608,10 @@
                     <div class="flex items-center gap-2">
                       <span class="font-pixel text-[10px] text-latte-subtext0" x-text="'#' + (aIdx + 1)"></span>
                       <template x-if="act.type === 'key'">
-                        <span class="font-pixel text-xs text-latte-mauve" x-text="'KEY [' + resolveKeyName(act.code) + '] ' + act.action.toUpperCase()"></span>
+                        <span class="font-pixel text-[10px] text-latte-mauve" x-text="'KEY [' + resolveKeyName(act.code) + '] ' + act.action.toUpperCase()"></span>
                       </template>
                       <template x-if="act.type === 'delay'">
-                        <span class="font-pixel text-xs text-latte-teal" x-text="'DELAY ' + act.ms + 'ms'"></span>
+                        <span class="font-pixel text-[10px] text-latte-teal" x-text="'DELAY ' + act.ms + 'ms'"></span>
                       </template>
                     </div>
                     <button type="button"
@@ -613,8 +623,8 @@
                 </template>
 
                 <template x-if="macros[activeMacroSlot].actions.length === 0">
-                  <div class="p-4 text-center border-2 border-dashed border-latte-surface1 text-latte-subtext1 text-xs">
-                    No actions in this macro slot yet. Click "+ ADD KEY" or "+ ADD DELAY" above!
+                  <div class="p-4 text-center border-2 border-dashed border-latte-surface1 text-latte-subtext1 text-[10px]">
+                    No actions in this macro slot yet. Click "+ ADD KEY" or "+ ADD DELAY" above.
                   </div>
                 </template>
               </div>
@@ -622,9 +632,10 @@
 
             <div class="flex justify-end gap-2 pt-2 border-t border-latte-surface1">
               <button type="button"
-                      @click="showToast('Macro saved to memory! 📜', 'success')"
-                      class="pixel-btn-primary text-xs">
-                💾 SAVE MACRO
+                      @click="showToast('Macro saved to memory', 'success')"
+                      class="pixel-btn-primary text-[10px] flex items-center gap-1.5">
+                <x-pixel-icon name="save" class="w-3.5 h-3.5" />
+                <span>SAVE MACRO</span>
               </button>
             </div>
           </div>
@@ -638,7 +649,7 @@
         <div class="pixel-box bg-latte-mantle p-4 flex flex-col md:flex-row items-center justify-between gap-3">
           <div>
             <h3 class="font-pixel text-xs text-latte-mauve font-bold">SAVE CURRENT SETUP AS PRESET</h3>
-            <p class="text-xs text-latte-subtext0">Captures all 4 layers, RGB lighting, Rapid Trigger settings, and base config.</p>
+            <p class="text-[10px] text-latte-subtext0">Captures all 4 layers, RGB lighting, Rapid Trigger settings, and base config.</p>
           </div>
 
           <!-- Create Preset Form -->
@@ -646,7 +657,6 @@
                 hx-target="#presets-list"
                 class="flex flex-wrap items-center gap-2">
             @csrf
-            <!-- Hidden inputs bound to Alpine state -->
             <input type="hidden" name="layers" :value="JSON.stringify(layers)">
             <input type="hidden" name="lighting" :value="JSON.stringify(lighting)">
             <input type="hidden" name="rapid_trigger" :value="JSON.stringify(rapidTrigger)">
@@ -655,12 +665,12 @@
 
             <input type="text"
                    name="name"
-                   placeholder="Preset name (e.g. Valorant Pro)"
+                   placeholder="PRESET NAME..."
                    required
-                   class="px-2.5 py-1 text-xs bg-latte-base border-2 border-latte-text shadow-[2px_2px_0_0_#4c4f69] font-pixel outline-none">
+                   class="px-2.5 py-1 text-[10px] bg-latte-base border-2 border-latte-text shadow-[2px_2px_0_0_#4c4f69] font-pixel outline-none uppercase">
 
             <select name="category"
-                    class="px-2 py-1 text-xs bg-latte-base border-2 border-latte-text font-pixel outline-none">
+                    class="px-2 py-1 text-[10px] bg-latte-base border-2 border-latte-text font-pixel outline-none uppercase">
               <option value="custom">Custom</option>
               <option value="gaming">Gaming</option>
               <option value="cozy">Cozy</option>
@@ -668,8 +678,9 @@
             </select>
 
             <button type="submit"
-                    class="pixel-btn-primary text-xs flex items-center gap-1">
-              <span>🌸</span> SAVE TO VAULT
+                    class="pixel-btn-primary text-[10px] flex items-center gap-1.5">
+              <x-pixel-icon name="save" class="w-3.5 h-3.5" />
+              <span>SAVE TO VAULT</span>
             </button>
           </form>
         </div>
@@ -678,7 +689,7 @@
         <div class="flex flex-wrap items-center justify-between gap-3">
           <!-- Category filters via htmx -->
           <div class="flex items-center gap-1">
-            <span class="font-pixel text-xs text-latte-subtext0 mr-1">FILTER:</span>
+            <span class="font-pixel text-[10px] text-latte-subtext0 mr-1">FILTER:</span>
             <button type="button"
                     hx-get="{{ route('presets.index', ['category' => 'all']) }}"
                     hx-target="#presets-list"
@@ -688,20 +699,23 @@
             <button type="button"
                     hx-get="{{ route('presets.index', ['category' => 'cozy']) }}"
                     hx-target="#presets-list"
-                    class="pixel-btn-rose text-[10px] px-2 py-1">
-              🌸 COZY
+                    class="pixel-btn-rose text-[10px] px-2 py-1 flex items-center gap-1">
+              <x-pixel-icon name="heart" class="w-3 h-3" />
+              <span>COZY</span>
             </button>
             <button type="button"
                     hx-get="{{ route('presets.index', ['category' => 'gaming']) }}"
                     hx-target="#presets-list"
-                    class="pixel-btn text-[10px] px-2 py-1 bg-latte-red text-latte-base border-2 border-latte-text shadow-[2px_2px_0_0_#4c4f69]">
-              ⚡ GAMING
+                    class="pixel-btn text-[10px] px-2 py-1 bg-latte-red text-latte-base border-2 border-latte-text shadow-[2px_2px_0_0_#4c4f69] flex items-center gap-1">
+              <x-pixel-icon name="gamepad" class="w-3 h-3" />
+              <span>GAMING</span>
             </button>
             <button type="button"
                     hx-get="{{ route('presets.index', ['category' => 'typing']) }}"
                     hx-target="#presets-list"
-                    class="pixel-btn text-[10px] px-2 py-1 bg-latte-peach text-latte-base border-2 border-latte-text shadow-[2px_2px_0_0_#4c4f69]">
-              ☕ TYPING
+                    class="pixel-btn text-[10px] px-2 py-1 bg-latte-peach text-latte-base border-2 border-latte-text shadow-[2px_2px_0_0_#4c4f69] flex items-center gap-1">
+              <x-pixel-icon name="keyboard" class="w-3 h-3" />
+              <span>TYPING</span>
             </button>
           </div>
 
@@ -712,7 +726,8 @@
                 class="flex items-center gap-2">
             @csrf
             <label class="pixel-btn-secondary text-[10px] px-2 py-1 cursor-pointer flex items-center gap-1">
-              <span>📥</span> IMPORT JSON
+              <x-pixel-icon name="download" class="w-3.5 h-3.5" />
+              <span>IMPORT JSON</span>
               <input type="file"
                      name="preset_file"
                      accept=".json"
@@ -739,14 +754,14 @@
 
             <!-- Report Rate -->
             <div class="flex flex-col gap-1">
-              <span class="text-xs font-pixel">POLLING RATE</span>
+              <span class="text-[10px] font-pixel">POLLING RATE</span>
               <div class="grid grid-cols-4 gap-2 mt-1">
                 <template x-for="rate in [125, 250, 500, 1000]" :key="rate">
                   <button type="button"
                           @click="baseConfig.reportRate = rate; updateBaseConfig()"
                           class="pixel-btn text-[10px]"
                           :class="baseConfig.reportRate === rate ? 'pixel-btn-primary' : 'pixel-btn-secondary'"
-                          x-text="rate + ' Hz'">
+                          x-text="rate + ' HZ'">
                   </button>
                 </template>
               </div>
@@ -754,9 +769,9 @@
 
             <!-- Sleep Timer -->
             <div class="flex flex-col gap-1">
-              <div class="flex justify-between text-xs font-pixel">
+              <div class="flex justify-between text-[10px] font-pixel">
                 <span>RGB SLEEP TIMER</span>
-                <span class="text-latte-peach" x-text="baseConfig.lightSleep === 0 ? 'Never' : baseConfig.lightSleep + ' min'"></span>
+                <span class="text-latte-peach" x-text="baseConfig.lightSleep === 0 ? 'NEVER' : baseConfig.lightSleep + ' MIN'"></span>
               </div>
               <input type="range"
                      min="0"
@@ -769,9 +784,9 @@
 
             <!-- Debounce -->
             <div class="flex flex-col gap-1">
-              <div class="flex justify-between text-xs font-pixel">
+              <div class="flex justify-between text-[10px] font-pixel">
                 <span>DEBOUNCE FILTER</span>
-                <span class="text-latte-teal" x-text="baseConfig.debounce + ' ms'"></span>
+                <span class="text-latte-teal" x-text="baseConfig.debounce + ' MS'"></span>
               </div>
               <input type="range"
                      min="0"
@@ -789,7 +804,7 @@
               <h3 class="font-pixel text-xs text-latte-mauve font-bold mb-3">GAMING LOCKS & SYSTEM</h3>
 
               <div class="flex flex-col gap-2.5">
-                <label class="flex items-center gap-2 cursor-pointer font-pixel text-xs">
+                <label class="flex items-center gap-2 cursor-pointer font-pixel text-[10px]">
                   <input type="checkbox"
                          x-model="baseConfig.lockWin"
                          @change="updateBaseConfig()"
@@ -797,7 +812,7 @@
                   <span>LOCK WINDOWS KEY</span>
                 </label>
 
-                <label class="flex items-center gap-2 cursor-pointer font-pixel text-xs">
+                <label class="flex items-center gap-2 cursor-pointer font-pixel text-[10px]">
                   <input type="checkbox"
                          x-model="baseConfig.lockAltTab"
                          @change="updateBaseConfig()"
@@ -805,7 +820,7 @@
                   <span>LOCK ALT+TAB</span>
                 </label>
 
-                <label class="flex items-center gap-2 cursor-pointer font-pixel text-xs">
+                <label class="flex items-center gap-2 cursor-pointer font-pixel text-[10px]">
                   <input type="checkbox"
                          x-model="baseConfig.lockAltF4"
                          @change="updateBaseConfig()"
@@ -813,7 +828,7 @@
                   <span>LOCK ALT+F4</span>
                 </label>
 
-                <label class="flex items-center gap-2 cursor-pointer font-pixel text-xs">
+                <label class="flex items-center gap-2 cursor-pointer font-pixel text-[10px]">
                   <input type="checkbox"
                          x-model="baseConfig.berserkMode"
                          @change="updateBaseConfig()"
@@ -824,12 +839,13 @@
 
               <!-- Hall Effect Sensor Calibration Wizard -->
               <div class="mt-4 pt-3 border-t border-latte-surface1">
-                <h4 class="font-pixel text-xs text-latte-teal font-bold mb-1">HALL SENSOR CALIBRATION</h4>
-                <p class="text-[11px] text-latte-subtext0 mb-2">Recalibrates magnetic range for all 61 keys. Run if any key fails to trigger.</p>
+                <h4 class="font-pixel text-[10px] text-latte-teal font-bold mb-1">HALL SENSOR CALIBRATION</h4>
+                <p class="text-[9px] text-latte-subtext0 mb-2">Recalibrates magnetic range for all 61 keys. Run if any switch fails to trigger.</p>
                 <button type="button"
                         @click="runCalibration()"
-                        class="pixel-btn-accent text-[11px] flex items-center gap-1">
-                  <span>🎯</span> START SENSOR CALIBRATION
+                        class="pixel-btn-accent text-[10px] flex items-center gap-1.5">
+                  <x-pixel-icon name="target" class="w-3.5 h-3.5" />
+                  <span>START SENSOR CALIBRATION</span>
                 </button>
               </div>
             </div>
@@ -837,14 +853,16 @@
             <div class="pt-3 border-t border-latte-surface1 flex justify-between items-center">
               <button type="button"
                       @click="triggerReset()"
-                      class="pixel-btn text-[10px] bg-latte-red text-latte-base hover:opacity-90 border-2 border-latte-text shadow-[2px_2px_0_0_#4c4f69]">
-                ⚠️ FACTORY RESET
+                      class="pixel-btn text-[10px] bg-latte-red text-latte-base hover:opacity-90 border-2 border-latte-text shadow-[2px_2px_0_0_#4c4f69] flex items-center gap-1">
+                <x-pixel-icon name="square-alert" class="w-3.5 h-3.5" />
+                <span>FACTORY RESET</span>
               </button>
 
               <button type="button"
                       @click="updateBaseConfig()"
-                      class="pixel-btn-primary text-xs">
-                💾 SAVE SETTINGS
+                      class="pixel-btn-primary text-[10px] flex items-center gap-1.5">
+                <x-pixel-icon name="save" class="w-3.5 h-3.5" />
+                <span>SAVE SETTINGS</span>
               </button>
             </div>
 
@@ -858,37 +876,37 @@
         <div class="pixel-box bg-latte-mantle p-5 flex flex-col gap-4">
           <div class="flex items-start justify-between gap-4">
             <div>
-              <h3 class="font-pixel text-sm text-latte-mauve font-bold mb-1">FIRMWARE RECOVERY & UPDATER</h3>
-              <p class="text-xs text-latte-subtext0">
+              <h3 class="font-pixel text-xs text-latte-mauve font-bold mb-1">FIRMWARE RECOVERY & UPDATER</h3>
+              <p class="text-[10px] text-latte-subtext0">
                 Official Sonix bootloader firmware proxy. Safely downloads and inspects official Nexus 61S firmware images.
               </p>
             </div>
-            <span class="font-pixel text-xs px-2 py-1 bg-latte-teal text-latte-base border border-latte-text">
+            <span class="font-pixel text-[10px] px-2 py-1 bg-latte-teal text-latte-base border border-latte-text">
               LATEST: v1.18
             </span>
           </div>
 
           <!-- Official Firmware Details -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 p-3 bg-latte-base border-2 border-latte-surface1 text-xs">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 p-3 bg-latte-base border-2 border-latte-surface1 text-[10px]">
             <div>
-              <span class="font-pixel text-[10px] text-latte-subtext0 block">OFFICIAL IMAGE:</span>
+              <span class="font-pixel text-[9px] text-latte-subtext0 block">OFFICIAL IMAGE:</span>
               <span class="font-mono font-bold text-latte-text">YODALL61_118.bin</span>
             </div>
             <div>
-              <span class="font-pixel text-[10px] text-latte-subtext0 block">FILE SIZE:</span>
+              <span class="font-pixel text-[9px] text-latte-subtext0 block">FILE SIZE:</span>
               <span class="font-mono text-latte-text">229,696 bytes</span>
             </div>
             <div>
-              <span class="font-pixel text-[10px] text-latte-subtext0 block">TARGET CONTROLLER:</span>
+              <span class="font-pixel text-[9px] text-latte-subtext0 block">TARGET CONTROLLER:</span>
               <span class="font-mono text-latte-text">Sonix Bootloader (0x0C45:0x0500)</span>
             </div>
           </div>
 
           <!-- Strict Safety Notice -->
-          <div class="p-3 bg-latte-peach/15 border-2 border-latte-peach text-xs flex items-start gap-2">
-            <span class="text-lg">⚠️</span>
+          <div class="p-3 bg-latte-peach/15 border-2 border-latte-peach text-[10px] flex items-start gap-2.5">
+            <x-pixel-icon name="square-alert" class="w-5 h-5 text-latte-peach flex-shrink-0" />
             <div>
-              <h5 class="font-pixel text-xs text-latte-peach font-bold mb-0.5">FIRMWARE FLASHING SAFETY WARNING</h5>
+              <h5 class="font-pixel text-[10px] text-latte-peach font-bold mb-0.5">FIRMWARE FLASHING SAFETY WARNING</h5>
               <p class="text-latte-subtext0">
                 Do not unplug the keyboard or close the browser tab during a firmware flash. Only flash when experiencing corrupted sensor data or when recommended by Yodall.
               </p>
@@ -898,15 +916,17 @@
           <!-- Actions -->
           <div class="flex flex-wrap items-center justify-between gap-3 pt-2">
             <a href="{{ route('firmware.download') }}"
-               class="pixel-btn-secondary text-xs flex items-center gap-1.5"
+               class="pixel-btn-secondary text-[10px] flex items-center gap-1.5"
                download>
-              <span>📥</span> DOWNLOAD OFFICIAL BINARY (SSRF-SAFE PROXY)
+              <x-pixel-icon name="download" class="w-3.5 h-3.5" />
+              <span>DOWNLOAD OFFICIAL BINARY</span>
             </a>
 
             <button type="button"
-                    @click="showToast('To flash firmware, ensure device is connected then switch to bootloader.', 'info')"
-                    class="pixel-btn-rose text-xs flex items-center gap-1.5">
-              <span>🚀</span> PREPARE BOOTLOADER FLASH
+                    @click="showToast('Connect device then switch to bootloader mode', 'info')"
+                    class="pixel-btn-rose text-[10px] flex items-center gap-1.5">
+              <x-pixel-icon name="cpu" class="w-3.5 h-3.5" />
+              <span>PREPARE BOOTLOADER FLASH</span>
             </button>
           </div>
         </div>
@@ -915,9 +935,9 @@
     </section>
 
     <!-- Footer -->
-    <footer class="text-center font-pixel text-[10px] text-latte-subtext0 py-2 flex flex-col sm:flex-row items-center justify-between gap-2">
-      <div class="flex items-center gap-1">
-        <span>🐾</span>
+    <footer class="text-center font-pixel text-[9px] text-latte-subtext0 py-2 flex flex-col sm:flex-row items-center justify-between gap-2">
+      <div class="flex items-center gap-1.5">
+        <x-pixel-icon name="heart" class="w-3 h-3 text-latte-pink" />
         <span>MEWXUS DRIVER • CATPPUCCIN LATTE • NEXUS 61S</span>
       </div>
       <div>
@@ -929,10 +949,10 @@
 
   <!-- Floating Toast Notification -->
   <div x-show="toast.show"
-       x-transition:enter="transition ease-out duration-200"
+       x-transition:enter="transition ease-out duration-150"
        x-transition:enter-start="opacity-0 translate-y-2"
        x-transition:enter-end="opacity-100 translate-y-0"
-       x-transition:leave="transition ease-in duration-150"
+       x-transition:leave="transition ease-in duration-100"
        x-transition:leave-start="opacity-100 translate-y-0"
        x-transition:leave-end="opacity-0 translate-y-2"
        class="fixed bottom-5 right-5 z-50 pixel-box px-4 py-3 flex items-center gap-2 shadow-[4px_4px_0_0_#4c4f69]"
@@ -941,7 +961,7 @@
          'bg-latte-green text-latte-base': toast.type === 'success',
          'bg-latte-red text-latte-base': toast.type === 'error'
        }">
-    <span class="font-pixel text-xs font-bold" x-text="toast.message"></span>
+    <span class="font-pixel text-[10px] font-bold" x-text="toast.message"></span>
     <button type="button" @click="toast.show = false" class="ml-2 font-bold hover:opacity-75">✕</button>
   </div>
 

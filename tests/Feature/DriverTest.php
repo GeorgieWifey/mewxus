@@ -15,7 +15,7 @@ class DriverTest extends TestCase
         $response = $this->get('/');
         $response->assertStatus(200);
         $response->assertSee('MEWXUS 61S');
-        $response->assertSee('Catppuccin');
+        $response->assertSee('CATPPUCCIN');
     }
 
     public function test_presets_index_returns_json_and_htmx_partial(): void

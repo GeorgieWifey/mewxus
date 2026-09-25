@@ -1414,3 +1414,580 @@ export const KEY_CATEGORIES = {
     }
   ]
 };
+
+export const LAYOUT_CODES = [
+  {
+    "type": 16,
+    "code": 41,
+    "code1": 0,
+    "code2": 41,
+    "name": "ESC"
+  },
+  {
+    "type": 16,
+    "code": 58,
+    "code1": 0,
+    "code2": 58,
+    "name": "F1"
+  },
+  {
+    "type": 16,
+    "code": 59,
+    "code1": 0,
+    "code2": 59,
+    "name": "F2"
+  },
+  {
+    "type": 16,
+    "code": 60,
+    "code1": 0,
+    "code2": 60,
+    "name": "F3"
+  },
+  {
+    "type": 16,
+    "code": 61,
+    "code1": 0,
+    "code2": 61,
+    "name": "F4"
+  },
+  {
+    "type": 16,
+    "code": 62,
+    "code1": 0,
+    "code2": 62,
+    "name": "F5"
+  },
+  {
+    "type": 16,
+    "code": 63,
+    "code1": 0,
+    "code2": 63,
+    "name": "F6"
+  },
+  {
+    "type": 16,
+    "code": 64,
+    "code1": 0,
+    "code2": 64,
+    "name": "F7"
+  },
+  {
+    "type": 16,
+    "code": 65,
+    "code1": 0,
+    "code2": 65,
+    "name": "F8"
+  },
+  {
+    "type": 16,
+    "code": 66,
+    "code1": 0,
+    "code2": 66,
+    "name": "F9"
+  },
+  {
+    "type": 16,
+    "code": 67,
+    "code1": 0,
+    "code2": 67,
+    "name": "F10"
+  },
+  {
+    "type": 16,
+    "code": 68,
+    "code1": 0,
+    "code2": 68,
+    "name": "F11"
+  },
+  {
+    "type": 16,
+    "code": 69,
+    "code1": 0,
+    "code2": 69,
+    "name": "F12"
+  },
+  {
+    "type": 16,
+    "code": 76,
+    "code1": 0,
+    "code2": 76,
+    "name": "Del"
+  },
+  {
+    "type": 16,
+    "code": 74,
+    "code1": 0,
+    "code2": 74,
+    "name": "Home"
+  },
+  {
+    "type": 16,
+    "code": 53,
+    "code1": 0,
+    "code2": 53,
+    "name": "~"
+  },
+  {
+    "type": 16,
+    "code": 30,
+    "code1": 0,
+    "code2": 30,
+    "name": "1"
+  },
+  {
+    "type": 16,
+    "code": 31,
+    "code1": 0,
+    "code2": 31,
+    "name": "2"
+  },
+  {
+    "type": 16,
+    "code": 32,
+    "code1": 0,
+    "code2": 32,
+    "name": "3"
+  },
+  {
+    "type": 16,
+    "code": 33,
+    "code1": 0,
+    "code2": 33,
+    "name": "4"
+  },
+  {
+    "type": 16,
+    "code": 34,
+    "code1": 0,
+    "code2": 34,
+    "name": "5"
+  },
+  {
+    "type": 16,
+    "code": 35,
+    "code1": 0,
+    "code2": 35,
+    "name": "6"
+  },
+  {
+    "type": 16,
+    "code": 36,
+    "code1": 0,
+    "code2": 36,
+    "name": "7"
+  },
+  {
+    "type": 16,
+    "code": 37,
+    "code1": 0,
+    "code2": 37,
+    "name": "8"
+  },
+  {
+    "type": 16,
+    "code": 38,
+    "code1": 0,
+    "code2": 38,
+    "name": "9"
+  },
+  {
+    "type": 16,
+    "code": 39,
+    "code1": 0,
+    "code2": 39,
+    "name": "0"
+  },
+  {
+    "type": 16,
+    "code": 45,
+    "code1": 0,
+    "code2": 45,
+    "name": "-"
+  },
+  {
+    "type": 16,
+    "code": 46,
+    "code1": 0,
+    "code2": 46,
+    "name": "="
+  },
+  {
+    "type": 16,
+    "code": 42,
+    "code1": 0,
+    "code2": 42,
+    "name": "Back"
+  },
+  {
+    "type": 16,
+    "code": 75,
+    "code1": 0,
+    "code2": 75,
+    "name": "PgUp"
+  },
+  {
+    "type": 16,
+    "code": 43,
+    "code1": 0,
+    "code2": 43,
+    "name": "Tab"
+  },
+  {
+    "type": 16,
+    "code": 20,
+    "code1": 0,
+    "code2": 20,
+    "name": "Q"
+  },
+  {
+    "type": 16,
+    "code": 26,
+    "code1": 0,
+    "code2": 26,
+    "name": "W"
+  },
+  {
+    "type": 16,
+    "code": 8,
+    "code1": 0,
+    "code2": 8,
+    "name": "E"
+  },
+  {
+    "type": 16,
+    "code": 21,
+    "code1": 0,
+    "code2": 21,
+    "name": "R"
+  },
+  {
+    "type": 16,
+    "code": 23,
+    "code1": 0,
+    "code2": 23,
+    "name": "T"
+  },
+  {
+    "type": 16,
+    "code": 28,
+    "code1": 0,
+    "code2": 28,
+    "name": "Y"
+  },
+  {
+    "type": 16,
+    "code": 24,
+    "code1": 0,
+    "code2": 24,
+    "name": "U"
+  },
+  {
+    "type": 16,
+    "code": 12,
+    "code1": 0,
+    "code2": 12,
+    "name": "I"
+  },
+  {
+    "type": 16,
+    "code": 18,
+    "code1": 0,
+    "code2": 18,
+    "name": "O"
+  },
+  {
+    "type": 16,
+    "code": 19,
+    "code1": 0,
+    "code2": 19,
+    "name": "P"
+  },
+  {
+    "type": 16,
+    "code": 47,
+    "code1": 0,
+    "code2": 47,
+    "name": "["
+  },
+  {
+    "type": 16,
+    "code": 48,
+    "code1": 0,
+    "code2": 48,
+    "name": "]"
+  },
+  {
+    "type": 16,
+    "code": 49,
+    "code1": 0,
+    "code2": 49,
+    "name": "\\"
+  },
+  {
+    "type": 16,
+    "code": 78,
+    "code1": 0,
+    "code2": 78,
+    "name": "PgDn"
+  },
+  {
+    "type": 16,
+    "code": 57,
+    "code1": 0,
+    "code2": 57,
+    "name": "Caps"
+  },
+  {
+    "type": 16,
+    "code": 4,
+    "code1": 0,
+    "code2": 4,
+    "name": "A"
+  },
+  {
+    "type": 16,
+    "code": 22,
+    "code1": 0,
+    "code2": 22,
+    "name": "S"
+  },
+  {
+    "type": 16,
+    "code": 7,
+    "code1": 0,
+    "code2": 7,
+    "name": "D"
+  },
+  {
+    "type": 16,
+    "code": 9,
+    "code1": 0,
+    "code2": 9,
+    "name": "F"
+  },
+  {
+    "type": 16,
+    "code": 10,
+    "code1": 0,
+    "code2": 10,
+    "name": "G"
+  },
+  {
+    "type": 16,
+    "code": 11,
+    "code1": 0,
+    "code2": 11,
+    "name": "H"
+  },
+  {
+    "type": 16,
+    "code": 13,
+    "code1": 0,
+    "code2": 13,
+    "name": "J"
+  },
+  {
+    "type": 16,
+    "code": 14,
+    "code1": 0,
+    "code2": 14,
+    "name": "K"
+  },
+  {
+    "type": 16,
+    "code": 15,
+    "code1": 0,
+    "code2": 15,
+    "name": "L"
+  },
+  {
+    "type": 16,
+    "code": 51,
+    "code1": 0,
+    "code2": 51,
+    "name": ";"
+  },
+  {
+    "type": 16,
+    "code": 52,
+    "code1": 0,
+    "code2": 52,
+    "name": "'"
+  },
+  {
+    "type": 16,
+    "code": 40,
+    "code1": 0,
+    "code2": 40,
+    "name": "Enter"
+  },
+  {
+    "type": 16,
+    "code": 77,
+    "code1": 0,
+    "code2": 77,
+    "name": "End"
+  },
+  {
+    "type": 16,
+    "code": 512,
+    "code1": 2,
+    "code2": 512,
+    "name": "LShift"
+  },
+  {
+    "type": 16,
+    "code": 29,
+    "code1": 0,
+    "code2": 29,
+    "name": "Z"
+  },
+  {
+    "type": 16,
+    "code": 27,
+    "code1": 0,
+    "code2": 27,
+    "name": "X"
+  },
+  {
+    "type": 16,
+    "code": 6,
+    "code1": 0,
+    "code2": 6,
+    "name": "C"
+  },
+  {
+    "type": 16,
+    "code": 25,
+    "code1": 0,
+    "code2": 25,
+    "name": "V"
+  },
+  {
+    "type": 16,
+    "code": 5,
+    "code1": 0,
+    "code2": 5,
+    "name": "B"
+  },
+  {
+    "type": 16,
+    "code": 17,
+    "code1": 0,
+    "code2": 17,
+    "name": "N"
+  },
+  {
+    "type": 16,
+    "code": 16,
+    "code1": 0,
+    "code2": 16,
+    "name": "M"
+  },
+  {
+    "type": 16,
+    "code": 54,
+    "code1": 0,
+    "code2": 54,
+    "name": ","
+  },
+  {
+    "type": 16,
+    "code": 55,
+    "code1": 0,
+    "code2": 55,
+    "name": "."
+  },
+  {
+    "type": 16,
+    "code": 56,
+    "code1": 0,
+    "code2": 56,
+    "name": "/"
+  },
+  {
+    "type": 16,
+    "code": 8192,
+    "code1": 32,
+    "code2": 8192,
+    "name": "RShift"
+  },
+  {
+    "type": 16,
+    "code": 82,
+    "code1": 0,
+    "code2": 82,
+    "name": "↑"
+  },
+  {
+    "type": 16,
+    "code": 256,
+    "code1": 1,
+    "code2": 256,
+    "name": "LCtrl"
+  },
+  {
+    "type": 16,
+    "code": 2048,
+    "code1": 8,
+    "code2": 2048,
+    "name": "Win"
+  },
+  {
+    "type": 16,
+    "code": 1024,
+    "code1": 4,
+    "code2": 1024,
+    "name": "LAlt"
+  },
+  {
+    "type": 16,
+    "code": 44,
+    "code1": 0,
+    "code2": 44,
+    "name": "Space"
+  },
+  {
+    "type": 16,
+    "code": 16384,
+    "code1": 64,
+    "code2": 16384,
+    "name": "RAlt"
+  },
+  {
+    "type": 240,
+    "code": 255,
+    "code1": 255,
+    "code2": 255,
+    "name": "Fn"
+  },
+  {
+    "type": 16,
+    "code": 4096,
+    "code1": 16,
+    "code2": 4096,
+    "name": "RCtrl"
+  },
+  {
+    "type": 16,
+    "code": 80,
+    "code1": 0,
+    "code2": 80,
+    "name": "←"
+  },
+  {
+    "type": 16,
+    "code": 81,
+    "code1": 0,
+    "code2": 81,
+    "name": "↓"
+  },
+  {
+    "type": 16,
+    "code": 79,
+    "code1": 0,
+    "code2": 79,
+    "name": "→"
+  }
+];

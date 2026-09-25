@@ -3,9 +3,9 @@ import '../css/app.css';
 import Alpine from 'alpinejs';
 import htmx from 'htmx.org';
 
-import { LAYOUT_KEYS, LIGHTING_EFFECTS, KEY_CATEGORIES } from './hid/layout.js';
+import { LAYOUT_KEYS, LAYOUT_CODES, LIGHTING_EFFECTS, KEY_CATEGORIES } from './hid/layout.js';
 import { HidTransport } from './hid/transport.js';
-import { NexusProtocol } from './hid/protocol.js';
+import { NexusProtocol, decodeKeyInfo, encodeKeyToTriple } from './hid/protocol.js';
 import { MockDevice } from './hid/mock-device.js';
 
 window.htmx = htmx;
@@ -25,22 +25,26 @@ Alpine.data('keyboardDriver', () => ({
   },
 
   // UI state
-  activeTab: 'keymap', // 'keymap', 'lighting', 'rapid_trigger', 'macros', 'presets', 'settings', 'firmware'
-  activeLayer: 0,      // 0, 1, 2, 3
+  activeTab: 'keymap',
+  activeLayer: 0,
   selectedKeyIndex: null,
   selectedCategory: 'basic',
   searchQuery: '',
   splitSpacebar: false,
 
   // Mascot state
-  mascotMood: 'idle', // 'idle', 'happy', 'sleepy', 'shocked', 'typing'
-  mascotSpeech: 'Meow! Connect your Nexus 61S or try Demo Mode!',
+  mascotMood: 'idle',
+  mascotSpeech: 'Connect your Nexus 61S or try Demo Mode',
   mascotTimer: null,
 
-  // Hardware state
+  // Hardware layout & codes
   layoutKeys: LAYOUT_KEYS,
+  layoutCodes: LAYOUT_CODES,
   lightingEffects: LIGHTING_EFFECTS,
   keyCategories: KEY_CATEGORIES,
+
+  // Hardware EEPROM default slots cache
+  defaultSlots: [],
 
   // Keymaps per layer: 4 arrays of 66 keys
   layers: [
@@ -48,7 +52,7 @@ Alpine.data('keyboardDriver', () => ({
   ],
 
   // Pressed keys tracking (for 0xA0 live travel events)
-  pressedKeys: {}, // keyIndex -> depthMm (0.0 to 4.0)
+  pressedKeys: {},
 
   // Lighting state
   lighting: {
@@ -57,9 +61,9 @@ Alpine.data('keyboardDriver', () => ({
     speed: 60,
     direction: 0,
     color: { r: 136, g: 57, b: 239 }, // Mauve
-    customColors: {}, // keyIndex -> hex
+    customColors: {},
   },
-  paintColor: '#ea76cb', // Pink for custom per-key lighting
+  paintColor: '#ea76cb',
 
   // Rapid Trigger state
   rapidTrigger: {
@@ -68,7 +72,7 @@ Alpine.data('keyboardDriver', () => ({
     globalReleaseSensitivity: 0.2,
     continuousRapidTrigger: true,
   },
-  perKeyActuation: {}, // keyIndex -> mm
+  perKeyActuation: {},
 
   // Base config
   baseConfig: {
@@ -104,38 +108,28 @@ Alpine.data('keyboardDriver', () => ({
     this.transport = new HidTransport();
     this.protocol = new NexusProtocol(this.transport);
 
-    // Initialize default layers
+    // Initialize initial layers with default matching
     for (let l = 0; l < 4; l++) {
-      this.layers[l] = LAYOUT_KEYS.map((k, idx) => ({
-        index: idx,
-        type: k.code === 255 ? 224 : 16,
-        code: k.code,
-        modifier: 0,
-        name: k.name,
-      }));
+      this.layers[l] = this.buildInitialLayer(l);
     }
 
-    // Auto-detect disconnect
     this.transport.on('disconnect', () => {
       this.handleDisconnected();
     });
 
-    // Listen for 0xA0 live key travel events
     this.transport.on('travel', (data) => {
       this.handleTravelEvent(data);
     });
 
-    // Handle htmx custom events
     document.body.addEventListener('presetSaved', (e) => {
-      this.showToast(`Preset "${e.detail.name}" saved! 🌸`, 'success');
-      this.setMascotMood('happy', 'Saved to preset vault! Purr~');
+      this.showToast(`Preset "${e.detail.name}" saved`, 'success');
+      this.setMascotMood('happy', 'Saved to preset vault');
     });
 
     document.body.addEventListener('presetDeleted', () => {
       this.showToast('Preset removed', 'info');
     });
 
-    // Physical keypresses in browser trigger cute mascot reaction
     window.addEventListener('keydown', () => {
       if (this.isConnected) {
         this.mascotMood = 'typing';
@@ -147,6 +141,50 @@ Alpine.data('keyboardDriver', () => ({
     });
   },
 
+  buildInitialLayer(layer) {
+    return LAYOUT_KEYS.map((k, idx) => ({
+      ...k,
+      index: idx,
+      slotIndex: idx,
+      type: k.code === 255 ? 240 : 16,
+      code1: k.code === 255 ? 255 : 0,
+      code2: k.code === 255 ? 0 : k.code,
+      code: k.code,
+      name: k.name,
+    }));
+  },
+
+  updateLayerKeysFromSlots(layer, userSlots) {
+    this.layers[layer] = LAYOUT_KEYS.map((k, a) => {
+      const codeDef = LAYOUT_CODES[a] || { type: 16, code1: 0, code2: k.code };
+      
+      let slotIdx = -1;
+      if (this.defaultSlots && this.defaultSlots.length > 0) {
+        slotIdx = this.defaultSlots.findIndex(s => 
+          s.type === codeDef.type && s.code1 === codeDef.code1 && s.code2 === codeDef.code2
+        );
+      }
+      if (slotIdx === -1) slotIdx = a;
+
+      const activeSlot = (userSlots && userSlots[slotIdx] && userSlots[slotIdx].type !== 255)
+        ? userSlots[slotIdx]
+        : { type: codeDef.type, code1: codeDef.code1, code2: codeDef.code2 };
+
+      const decoded = decodeKeyInfo(activeSlot.type, activeSlot.code1, activeSlot.code2);
+
+      return {
+        ...k,
+        index: a,
+        slotIndex: slotIdx,
+        type: activeSlot.type,
+        code1: activeSlot.code1,
+        code2: activeSlot.code2,
+        code: decoded.code || k.code,
+        name: decoded.name || this.resolveKeyName(decoded.code || k.code),
+      };
+    });
+  },
+
   setMascotMood(mood, speech = null) {
     this.mascotMood = mood;
     if (speech) this.mascotSpeech = speech;
@@ -154,7 +192,7 @@ Alpine.data('keyboardDriver', () => ({
     this.mascotTimer = setTimeout(() => {
       this.mascotMood = 'idle';
       if (this.isConnected) {
-        this.mascotSpeech = this.isDemo ? 'Running in Demo Mode! Press keys to test.' : 'Nexus 61S connected & purring!';
+        this.mascotSpeech = this.isDemo ? 'Running in Demo Mode. Press keys to test.' : 'Nexus 61S connected and active';
       }
     }, 4000);
   },
@@ -171,7 +209,7 @@ Alpine.data('keyboardDriver', () => ({
 
   async connectWebHID() {
     this.isConnecting = true;
-    this.setMascotMood('happy', 'Reaching for your Nexus 61S...');
+    this.setMascotMood('happy', 'Searching for Nexus 61S...');
 
     try {
       const dev = await this.transport.requestAndConnect();
@@ -179,46 +217,46 @@ Alpine.data('keyboardDriver', () => ({
       this.isDemo = false;
       this.deviceInfo.name = dev.productName || 'Nexus 61S';
 
-      // Read initial config from device
       try {
         const info = await this.protocol.getInfo();
         this.deviceInfo.fwVersion = info.fwVersion;
+
         const base = await this.protocol.getBaseConfig();
         this.baseConfig = { ...this.baseConfig, ...base };
+
         const light = await this.protocol.getLighting();
         this.lighting = { ...this.lighting, ...light };
+
         const rt = await this.protocol.getRapidTrigger();
         this.rapidTrigger = { ...this.rapidTrigger, ...rt };
 
-        // Read active layer keymap
-        const km = await this.protocol.getKeymap(this.activeLayer);
-        if (km && km.length > 0) {
-          this.layers[this.activeLayer] = km.map((k, idx) => ({
-            ...k,
-            name: this.resolveKeyName(k.code),
-          }));
-        }
+        // Read default matrix (subcommand 7) to match physical keys to EEPROM slots
+        this.defaultSlots = await this.protocol.readKeyMatrix(7, 0, 0);
+
+        // Read active layer user matrix (subcommand 8)
+        const userSlots = await this.protocol.readKeyMatrix(8, 0, this.activeLayer);
+        this.updateLayerKeysFromSlots(this.activeLayer, userSlots);
+
       } catch (readErr) {
         console.warn('Initial read partial:', readErr);
       }
 
-      this.showToast(`Connected to ${this.deviceInfo.name}! 🐾`, 'success');
-      this.setMascotMood('happy', 'Connected! Nexus 61S is ready to customize!');
+      this.showToast(`Connected to ${this.deviceInfo.name}`, 'success');
+      this.setMascotMood('happy', 'Connected. Nexus 61S is ready to customize.');
     } catch (err) {
       console.error(err);
       this.showToast(err.message || 'Failed to connect device', 'error');
-      this.setMascotMood('shocked', 'Oops! Could not connect. Try Demo Mode!');
+      this.setMascotMood('shocked', 'Could not connect. Try Demo Mode.');
     } finally {
       this.isConnecting = false;
     }
   },
 
-  enableDemoMode() {
+  async enableDemoMode() {
     this.mockDevice = new MockDevice();
     this.transport = this.mockDevice;
     this.protocol = new NexusProtocol(this.transport);
 
-    // Forward events
     this.mockDevice.on('travel', (data) => {
       this.handleTravelEvent(data);
     });
@@ -228,8 +266,13 @@ Alpine.data('keyboardDriver', () => ({
     this.deviceInfo.name = 'Nexus 61S (Demo Mode)';
     this.deviceInfo.fwVersion = '1.18';
 
-    this.showToast('Demo Mode active! All features unlocked ✨', 'success');
-    this.setMascotMood('happy', 'Welcome to Demo Mode! Try typing on your keyboard!');
+    // Read mock slots
+    this.defaultSlots = await this.protocol.readKeyMatrix(7, 0, 0);
+    const userSlots = await this.protocol.readKeyMatrix(8, 0, this.activeLayer);
+    this.updateLayerKeysFromSlots(this.activeLayer, userSlots);
+
+    this.showToast('Demo Mode active. All features unlocked', 'success');
+    this.setMascotMood('happy', 'Demo Mode active. Press physical keys to test.');
   },
 
   disconnect() {
@@ -245,12 +288,12 @@ Alpine.data('keyboardDriver', () => ({
     this.deviceInfo.name = 'Nexus 61S';
     this.deviceInfo.fwVersion = '---';
     this.showToast('Keyboard disconnected', 'info');
-    this.setMascotMood('sleepy', 'Keyboard went to sleep. Connect whenever you are ready!');
+    this.setMascotMood('sleepy', 'Keyboard disconnected. Connect whenever ready.');
   },
 
   handleTravelEvent(data) {
     const keyIndex = data[1];
-    const rawVal = data[2]; // 0 - 255
+    const rawVal = data[2];
     const depthMm = (rawVal / 255) * 4.0;
 
     if (depthMm > 0.05) {
@@ -268,14 +311,12 @@ Alpine.data('keyboardDriver', () => ({
     return `K${code}`;
   },
 
-  // Key Selection & Mapping
   selectKey(index) {
     this.selectedKeyIndex = index;
 
-    // If on lighting custom paint mode, apply color immediately
     if (this.activeTab === 'lighting' && this.lighting.effect === 0) {
       this.lighting.customColors[index] = this.paintColor;
-      this.showToast(`Key #${index} painted ${this.paintColor}!`, 'info');
+      this.showToast(`Key #${index} painted ${this.paintColor}`, 'info');
       return;
     }
 
@@ -283,26 +324,41 @@ Alpine.data('keyboardDriver', () => ({
     this.setMascotMood('happy', `Selected [${currentKey?.name || 'Key'}] on Layer ${this.activeLayer}`);
   },
 
-  assignKeycode(newCode, type = 16) {
+  async assignKeycode(newCode, newType = 16) {
     if (this.selectedKeyIndex === null) {
-      this.showToast('Please click a key on the visual keyboard first!', 'info');
+      this.showToast('Click a key on the visual keyboard first', 'info');
       return;
     }
 
-    const kName = this.resolveKeyName(newCode);
+    const k = this.layers[this.activeLayer][this.selectedKeyIndex];
+    const triple = encodeKeyToTriple(newCode, newType);
+    const decoded = decodeKeyInfo(triple.type, triple.code1, triple.code2);
+    const kName = decoded.name || this.resolveKeyName(newCode);
+
     this.layers[this.activeLayer][this.selectedKeyIndex] = {
-      index: this.selectedKeyIndex,
-      type,
+      ...k,
+      type: triple.type,
+      code1: triple.code1,
+      code2: triple.code2,
       code: newCode,
-      modifier: 0,
       name: kName,
     };
 
-    this.showToast(`Assigned [${kName}] to Key #${this.selectedKeyIndex}`, 'success');
-    this.setMascotMood('happy', `Assigned [${kName}]! Don't forget to sync.`);
+    const slot = k.slotIndex !== undefined ? k.slotIndex : this.selectedKeyIndex;
 
-    // Sync to device
-    this.syncKeymap();
+    if (this.isConnected) {
+      try {
+        await this.protocol.setUserKey(0, this.activeLayer, slot, triple.type, triple.code1, triple.code2);
+        this.showToast(`Assigned [${kName}] to Slot #${slot}`, 'success');
+      } catch (err) {
+        console.error(err);
+        this.showToast('Error syncing key to hardware', 'error');
+      }
+    } else {
+      this.showToast(`Assigned [${kName}]`, 'info');
+    }
+
+    this.setMascotMood('happy', `Assigned [${kName}]`);
   },
 
   async switchLayer(layer) {
@@ -310,17 +366,12 @@ Alpine.data('keyboardDriver', () => ({
     this.selectedKeyIndex = null;
     this.setMascotMood('happy', `Switched to Layer ${layer}`);
 
-    if (this.isConnected && !this.isDemo) {
+    if (this.isConnected) {
       try {
-        const km = await this.protocol.getKeymap(layer);
-        if (km && km.length > 0) {
-          this.layers[layer] = km.map(k => ({
-            ...k,
-            name: this.resolveKeyName(k.code),
-          }));
-        }
+        const userSlots = await this.protocol.readKeyMatrix(8, 0, layer);
+        this.updateLayerKeysFromSlots(layer, userSlots);
       } catch (err) {
-        console.warn('Could not read layer:', err);
+        console.warn('Could not read layer matrix:', err);
       }
     }
   },
@@ -328,20 +379,19 @@ Alpine.data('keyboardDriver', () => ({
   async syncKeymap() {
     if (!this.isConnected) return;
     try {
-      await this.protocol.setKeymap(this.activeLayer, 0, this.layers[this.activeLayer]);
-      this.showToast(`Layer ${this.activeLayer} saved to keyboard! 🐾`, 'success');
+      await this.protocol.setKeymap(0, this.activeLayer, this.layers[this.activeLayer]);
+      this.showToast(`Layer ${this.activeLayer} saved to keyboard`, 'success');
     } catch (err) {
       console.error(err);
       this.showToast('Error syncing keymap', 'error');
     }
   },
 
-  // Lighting controls
   async updateLighting() {
     if (!this.isConnected) return;
     try {
       await this.protocol.setLighting(this.lighting);
-      this.showToast('Lighting effect updated! ✨', 'success');
+      this.showToast('Lighting effect updated', 'success');
     } catch (err) {
       console.error(err);
       this.showToast('Error setting lighting', 'error');
@@ -356,60 +406,55 @@ Alpine.data('keyboardDriver', () => ({
     this.updateLighting();
   },
 
-  // Rapid Trigger controls
   async updateRapidTrigger() {
     if (!this.isConnected) return;
     try {
       await this.protocol.setRapidTrigger(this.rapidTrigger);
-      this.showToast('Rapid Trigger updated! ⚡', 'success');
-      this.setMascotMood('happy', `Actuation set to ${this.rapidTrigger.globalActuation}mm!`);
+      this.showToast('Rapid Trigger updated', 'success');
+      this.setMascotMood('happy', `Actuation set to ${this.rapidTrigger.globalActuation}mm`);
     } catch (err) {
       console.error(err);
       this.showToast('Error setting Rapid Trigger', 'error');
     }
   },
 
-  // Base config
   async updateBaseConfig() {
     if (!this.isConnected) return;
     try {
       await this.protocol.setBaseConfig(this.baseConfig);
-      this.showToast('Settings saved to hardware! ⚙️', 'success');
+      this.showToast('Settings saved to hardware', 'success');
     } catch (err) {
       console.error(err);
       this.showToast('Error updating settings', 'error');
     }
   },
 
-  // Factory reset
   async triggerReset() {
     if (!confirm('Reset keyboard settings to factory defaults?')) return;
     try {
       await this.protocol.factoryReset();
-      this.showToast('Reset to factory defaults! 🌸', 'info');
-      this.setMascotMood('shocked', 'Factory reset completed!');
+      this.showToast('Reset to factory defaults', 'info');
+      this.setMascotMood('shocked', 'Factory reset completed');
     } catch (err) {
       this.showToast('Reset failed', 'error');
     }
   },
 
-  // Calibration
   async runCalibration() {
     try {
       await this.protocol.startCalibration();
-      this.showToast('Calibration started! Press all keys fully down.', 'info');
-      this.setMascotMood('typing', 'Calibration in progress! Press each key.');
+      this.showToast('Calibration started. Press all keys fully down.', 'info');
+      this.setMascotMood('typing', 'Calibration in progress. Press each key.');
       setTimeout(async () => {
         await this.protocol.endCalibration();
-        this.showToast('Calibration finished & saved! 🐾', 'success');
-        this.setMascotMood('happy', 'Sensors calibrated to perfection!');
+        this.showToast('Calibration finished and saved', 'success');
+        this.setMascotMood('happy', 'Sensors calibrated');
       }, 5000);
     } catch (err) {
       this.showToast('Calibration error', 'error');
     }
   },
 
-  // Presets
   applyPreset(presetData) {
     if (presetData.layers) this.layers = presetData.layers;
     if (presetData.lighting) this.lighting = { ...this.lighting, ...presetData.lighting };
@@ -424,11 +469,10 @@ Alpine.data('keyboardDriver', () => ({
       this.updateBaseConfig();
     }
 
-    this.showToast(`Applied preset: ${presetData.name} 🌸`, 'success');
-    this.setMascotMood('happy', `Loaded preset "${presetData.name}"!`);
+    this.showToast(`Applied preset: ${presetData.name}`, 'success');
+    this.setMascotMood('happy', `Loaded preset "${presetData.name}"`);
   },
 
-  // Filtered keys helper
   get filteredKeycodes() {
     const list = this.keyCategories[this.selectedCategory] || [];
     if (!this.searchQuery) return list;

@@ -9,9 +9,11 @@ class PresetSeeder extends Seeder
 {
     public function run(): void
     {
+        Preset::truncate();
+
         Preset::create([
-            'name' => '🌸 Sakura Cozy',
-            'description' => 'Gentle pastel theme for daily typing. Soft pink & lavender breathing lights, standard 2.0mm magnetic actuation.',
+            'name' => 'Sakura Cozy',
+            'description' => 'Gentle pastel theme for daily typing. Soft pink and lavender breathing lights, standard 2.0mm magnetic actuation.',
             'category' => 'cozy',
             'lighting' => [
                 'effect' => 4, // Breathing
@@ -38,7 +40,7 @@ class PresetSeeder extends Seeder
         ]);
 
         Preset::create([
-            'name' => '⚡ Apex Rapid Trigger',
+            'name' => 'Apex Rapid Trigger',
             'description' => 'Ultra-fast competitive FPS mode. 0.4mm actuation with 0.1mm continuous Rapid Trigger and berserk performance.',
             'category' => 'gaming',
             'lighting' => [
@@ -66,7 +68,7 @@ class PresetSeeder extends Seeder
         ]);
 
         Preset::create([
-            'name' => '☕ Latte Code & Focus',
+            'name' => 'Latte Code & Focus',
             'description' => 'Static warm latte cream lighting with 1.8mm balanced tactile travel and Win key enabled.',
             'category' => 'typing',
             'lighting' => [

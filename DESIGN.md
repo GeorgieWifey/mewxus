@@ -14,19 +14,28 @@ colors:
   neutral-surface: "#ccd0da"
   neutral-mantle: "#e6e9ef"
   neutral-crust: "#dce0e8"
+  white: "#ffffff"
 typography:
   display:
     fontFamily: '"Silkscreen", "Press Start 2P", monospace'
-    fontSize: "1.125rem"
+    fontSize: "18px"
     fontWeight: 700
     lineHeight: 1.2
     letterSpacing: "-0.02em"
+  headline:
+    fontFamily: '"Silkscreen", monospace'
+    fontSize: "12px"
+    fontWeight: 700
   body:
-    fontFamily: '"Nunito", system-ui, -apple-system, sans-serif'
-    fontSize: "0.875rem"
+    fontFamily: '"Silkscreen", monospace'
+    fontSize: "10px"
     fontWeight: 400
     lineHeight: 1.5
     letterSpacing: "normal"
+  label:
+    fontFamily: '"Silkscreen", monospace'
+    fontSize: "9px"
+    fontWeight: 700
 rounded:
   sm: "0px"
   md: "0px"
@@ -57,6 +66,7 @@ Mewxus elevates keyboard driver utilities from sterile industrial panels into a 
 - Authentic pixel-art geometry with hard-stepped block borders and no rounded corners.
 - Playful interaction feedback: an animated pixel cat mascot that reacts to typing, moods, and hardware status.
 - Real-time magnetic switch travel gauge streaming 0xA0 packets with live depth visualizers.
+- Zero emojis: all iconography rendered via handmade pixelarticons SVGs.
 
 ## Colors
 
@@ -78,14 +88,13 @@ The palette is strictly derived from Catppuccin Latte's warm pastel tones.
 
 ## Typography
 
-**Display Font:** Silkscreen (with Press Start 2P, monospace fallback)
-**Body Font:** Nunito (with system-ui, -apple-system fallback)
+**Display & Body Font:** Silkscreen (with Press Start 2P, monospace fallback)
 
 ### Hierarchy
-- **Display** (Bold 700, 1.125rem, 1.2): Title banner and brand logo.
-- **Headline** (Bold 700, 0.75rem, 1.3): Panel headings and layer selectors.
-- **Body** (Regular 400, 0.75rem - 0.875rem, 1.5): Instructional copy and descriptions.
-- **Label** (Bold 700, 0.625rem, uppercase): Keycap legends and slot indicators.
+- **Display** (Bold 700, 18px): Title banner and brand logo.
+- **Headline** (Bold 700, 12px): Panel headings and layer selectors.
+- **Body** (Regular 400, 10px): Instructional copy and descriptions.
+- **Label** (Bold 700, 9px): Keycap legends and slot indicators.
 
 ## Layout
 
@@ -119,9 +128,10 @@ Zero-blur hard stepped shadows convey authentic 8-bit tactile depth.
 
 ### Do:
 - **Do** maintain the Catppuccin Latte pastel palette for all UI elements.
-- **Do** use Silkscreen for headings and keycap legends, and Nunito for numerical data and reading text.
+- **Do** use Silkscreen / pixel font across all UI elements.
+- **Do** use pixelarticons SVG icons instead of Unicode emojis.
 - **Do** ensure live visual feedback occurs on real-time actuation events.
 
 ### Don't:
+- **Don't** use emojis anywhere in the interface.
 - **Don't** introduce rounded border radii (`border-radius > 0`) or soft drop shadows.
-- **Don't** use generic stock icon sets; prefer authored SVGs and pixel glyphs.

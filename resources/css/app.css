@@ -1,5 +1,5 @@
 @import '@unocss/reset/tailwind.css';
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Silkscreen:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&display=swap');
 
 [x-cloak] {
   display: none !important;
@@ -34,8 +34,12 @@
   --color-crust: #dce0e8;
 }
 
+*, *::before, *::after, body, html, input, button, select, textarea, p, span, div, h1, h2, h3, h4, h5, h6 {
+  font-family: 'Silkscreen', 'Press Start 2P', monospace !important;
+  letter-spacing: -0.02em;
+}
+
 body {
-  font-family: 'Nunito', system-ui, -apple-system, sans-serif;
   color: var(--color-text);
   background-color: var(--color-mantle);
   background-image: 
@@ -76,7 +80,7 @@ body {
   border: 2px solid var(--color-text);
   box-shadow: 0 4px 0 0 var(--color-text), inset 0 2px 0 0 rgba(255, 255, 255, 0.6);
   transition: transform 0.05s ease, box-shadow 0.05s ease, background-color 0.15s ease;
-  font-family: 'Silkscreen', monospace;
+  font-family: 'Silkscreen', monospace !important;
   image-rendering: pixelated;
 }
 

@@ -3,7 +3,7 @@
  * Allows full interactive testing of all features without physical hardware.
  */
 
-import { LAYOUT_KEYS, LIGHTING_EFFECTS } from './layout.js';
+import { LAYOUT_KEYS, LAYOUT_CODES, LIGHTING_EFFECTS } from './layout.js';
 
 export class MockDevice {
   constructor() {
@@ -22,7 +22,12 @@ export class MockDevice {
       disconnect: [],
     };
 
-    // In-memory keyboard state
+    // Initialize 128 slots per layer matching LAYOUT_CODES
+    const defaultSlots = Array.from({ length: 128 }, (_, i) => {
+      const codeDef = LAYOUT_CODES[i] || { type: 16, code1: 0, code2: (LAYOUT_KEYS[i]?.code || 0) };
+      return { slot: i, type: codeDef.type, code1: codeDef.code1, code2: codeDef.code2 };
+    });
+
     this.state = {
       fwVersion: '1.18',
       baseConfig: {
@@ -52,11 +57,12 @@ export class MockDevice {
         continuousRapidTrigger: true,
       },
       perKeyActuation: {},
-      layers: [
-        this.generateDefaultKeymap(0),
-        this.generateDefaultKeymap(1),
-        this.generateDefaultKeymap(2),
-        this.generateDefaultKeymap(3),
+      defaultMatrix: defaultSlots,
+      userLayers: [
+        JSON.parse(JSON.stringify(defaultSlots)),
+        JSON.parse(JSON.stringify(defaultSlots)),
+        JSON.parse(JSON.stringify(defaultSlots)),
+        JSON.parse(JSON.stringify(defaultSlots)),
       ],
       macros: Array.from({ length: 16 }, (_, i) => ({
         id: i,
@@ -66,16 +72,6 @@ export class MockDevice {
     };
 
     this.setupPhysicalKeyboardListeners();
-  }
-
-  generateDefaultKeymap(layer) {
-    return LAYOUT_KEYS.map((k, idx) => ({
-      index: idx,
-      type: k.code === 255 ? 224 : 16,
-      code: k.code,
-      modifier: 0,
-      name: k.name,
-    }));
   }
 
   on(event, callback) {
@@ -106,7 +102,6 @@ export class MockDevice {
     if (typeof window === 'undefined') return;
 
     window.addEventListener('keydown', (e) => {
-      // Find matching key in layout
       const keyObj = LAYOUT_KEYS.find(k => {
         if (k.name.toLowerCase() === e.key.toLowerCase()) return true;
         if (e.code.toLowerCase().includes(k.name.toLowerCase())) return true;
@@ -114,7 +109,7 @@ export class MockDevice {
       });
 
       const keyIndex = keyObj ? LAYOUT_KEYS.indexOf(keyObj) : 0;
-      this.simulateKeyTravel(keyIndex, 3.8); // 3.8mm press
+      this.simulateKeyTravel(keyIndex, 3.8);
     });
 
     window.addEventListener('keyup', (e) => {
@@ -125,26 +120,20 @@ export class MockDevice {
       });
 
       const keyIndex = keyObj ? LAYOUT_KEYS.indexOf(keyObj) : 0;
-      this.simulateKeyTravel(keyIndex, 0.0); // Release
+      this.simulateKeyTravel(keyIndex, 0.0);
     });
   }
 
-  /**
-   * Simulate a live 0xA0 travel packet
-   * @param {number} keyIndex
-   * @param {number} depthMm (0.0 to 4.0)
-   */
   simulateKeyTravel(keyIndex, depthMm) {
     const packet = new Uint8Array(64);
     packet[0] = 0xA0; // 160
     packet[1] = keyIndex;
-    packet[2] = Math.min(255, Math.round((depthMm / 4.0) * 255)); // travel raw
+    packet[2] = Math.min(255, Math.round((depthMm / 4.0) * 255));
     this.emit('travel', packet);
   }
 
   async sendCommand(cmd, args = []) {
-    // Artificial latency for realism (15ms)
-    await new Promise(r => setTimeout(r, 15));
+    await new Promise(r => setTimeout(r, 10));
 
     // Handle 0x55 (85)
     if (cmd === 85) {
@@ -153,8 +142,8 @@ export class MockDevice {
       // Subcommand 3: getInfo
       if (sub === 3) {
         const res = new Array(64).fill(0);
-        res[8] = 0x18; // 18 hex
-        res[9] = 0x01; // 01 hex -> 1.18
+        res[8] = 0x18;
+        res[9] = 0x01; // 1.18
         return res;
       }
 
@@ -176,48 +165,39 @@ export class MockDevice {
         return res;
       }
 
-      // Subcommand 5: read memory (keymap / lighting)
-      if (sub === 5) {
-        const len = args[3] || 32;
+      // Subcommand 7 (read default matrix) & 8 (read user matrix)
+      if (sub === 7 || sub === 8) {
+        const len = args[3] || 56;
         const addr = (args[5] << 8) | args[4];
         const res = new Array(64).fill(0);
 
-        // Check if reading keymap: 2048 * layer
-        const layer = Math.floor(addr / 2048);
-        if (layer >= 0 && layer < 4) {
-          const keymap = this.state.layers[layer];
-          const byteOffset = addr % 2048;
-          for (let i = 0; i < len; i++) {
-            const keyIndex = Math.floor((byteOffset + i) / 3);
-            const byteType = (byteOffset + i) % 3;
-            const k = keymap[keyIndex] || { type: 16, code: 0, modifier: 0 };
-            if (byteType === 0) res[8 + i] = k.type;
-            else if (byteType === 1) res[8 + i] = k.modifier;
-            else if (byteType === 2) res[8 + i] = k.code;
-          }
+        const layer = Math.floor(addr / 512);
+        const slots = sub === 7 ? this.state.defaultMatrix : (this.state.userLayers[layer] || this.state.defaultMatrix);
+        const byteOffset = addr % 512;
+
+        for (let i = 0; i < len; i++) {
+          const slotIndex = Math.floor((byteOffset + i) / 3);
+          const tripletPos = (byteOffset + i) % 3;
+          const s = slots[slotIndex] || { type: 16, code1: 0, code2: 0 };
+          if (tripletPos === 0) res[8 + i] = s.type;
+          else if (tripletPos === 1) res[8 + i] = s.code1;
+          else if (tripletPos === 2) res[8 + i] = s.code2;
         }
         return res;
       }
 
-      // Subcommand 6: write memory
-      if (sub === 6) {
+      // Subcommand 9: write user key to slot
+      if (sub === 9) {
         const len = args[3];
         const addr = (args[5] << 8) | args[4];
-        const data = args.slice(6, 6 + len);
+        const layer = Math.floor(addr / 512);
+        const slot = Math.floor((addr % 512) / 3);
+        const type = args[7];
+        const code1 = args[8];
+        const code2 = args[9];
 
-        const layer = Math.floor(addr / 2048);
-        if (layer >= 0 && layer < 4) {
-          const byteOffset = addr % 2048;
-          for (let i = 0; i < len; i++) {
-            const keyIndex = Math.floor((byteOffset + i) / 3);
-            const byteType = (byteOffset + i) % 3;
-            if (!this.state.layers[layer][keyIndex]) {
-              this.state.layers[layer][keyIndex] = { index: keyIndex, type: 16, code: 0, modifier: 0 };
-            }
-            if (byteType === 0) this.state.layers[layer][keyIndex].type = data[i];
-            else if (byteType === 1) this.state.layers[layer][keyIndex].modifier = data[i];
-            else if (byteType === 2) this.state.layers[layer][keyIndex].code = data[i];
-          }
+        if (this.state.userLayers[layer]) {
+          this.state.userLayers[layer][slot] = { slot, type, code1, code2 };
         }
         return new Array(64).fill(0);
       }
@@ -234,7 +214,7 @@ export class MockDevice {
 
       // Subcommand 161: set Rapid Trigger
       if (sub === 161) {
-        this.state.rapidTrigger.globalActuation = (args[1] || 20) / 10;
+        this.state.rapidTrigger.globalActuation = (args[1] || 15) / 10;
         this.state.rapidTrigger.globalPressSensitivity = (args[2] || 2) / 10;
         this.state.rapidTrigger.globalReleaseSensitivity = (args[3] || 2) / 10;
         this.state.rapidTrigger.continuousRapidTrigger = Boolean(args[4] & 1);
@@ -249,11 +229,11 @@ export class MockDevice {
 
     // Factory reset
     if (cmd === 6 && args[0] === 15 && args[1] === 255) {
-      this.state.layers = [
-        this.generateDefaultKeymap(0),
-        this.generateDefaultKeymap(1),
-        this.generateDefaultKeymap(2),
-        this.generateDefaultKeymap(3),
+      this.state.userLayers = [
+        JSON.parse(JSON.stringify(this.state.defaultMatrix)),
+        JSON.parse(JSON.stringify(this.state.defaultMatrix)),
+        JSON.parse(JSON.stringify(this.state.defaultMatrix)),
+        JSON.parse(JSON.stringify(this.state.defaultMatrix)),
       ];
       return new Array(64).fill(0);
     }
