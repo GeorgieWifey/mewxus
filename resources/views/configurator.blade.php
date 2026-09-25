@@ -24,13 +24,13 @@
                  x-text="$store.app.error"></div>
 
             <div class="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
-                <button type="button" class="pixel-btn pixel-btn-primary px-5 py-3 text-base grow"
+                <button type="button" class="pixel-btn pixel-btn-primary px-5 py-3 text-[16px] grow"
                         :disabled="$store.app.connecting"
                         @click="$store.app.connectReal()">
                     <span x-show="!$store.app.connecting">Connect keyboard</span>
                     <span x-show="$store.app.connecting" x-text="$store.app.busyText || 'Connecting...'"></span>
                 </button>
-                <button type="button" class="pixel-btn bg-surface1 px-5 py-3 text-base"
+                <button type="button" class="pixel-btn bg-surface1 px-5 py-3 text-[16px]"
                         :disabled="$store.app.connecting"
                         @click="$store.app.connectDemo()">
                     Try demo cat
@@ -64,7 +64,7 @@
             <button type="button" class="pixel-btn bg-surface1 px-3 py-1.5 text-xs" @click="$store.app.disconnect()">Disconnect</button>
         </header>
 
-        <main class="flex-1 grid gap-4 p-4 items-start grid-cols-1 lg:grid-cols-[270px_minmax(0,1fr)_380px]">
+        <main class="flex-1 grid gap-4 p-4 items-start lg:items-stretch grid-cols-1 lg:grid-cols-[270px_minmax(0,1fr)_380px]">
             {{-- ─── left rail ─── --}}
             <aside class="flex flex-col gap-4">
                 <section class="pixel-panel p-4">
@@ -144,7 +144,7 @@
                     <template x-for="t in ['keys','lights','feel','macros','settings','firmware']" :key="t">
                         <button type="button" role="tab"
                                 class="font-pixel text-[10px] px-1 py-2.5 uppercase border-r-2 border-b-2 border-crust [&:nth-child(3)]:border-r-0 cursor-pointer"
-                                :class="$store.app.tab === t ? 'bg-base text-text' : 'bg-mantle text-subtext0 hover:text-text'"
+                                :class="$store.app.tab === t ? 'bg-lavender/40 text-text' : 'bg-mantle text-subtext0 hover:text-text'"
                                 @click="$store.app.tab = t"
                                 x-text="t" :aria-selected="$store.app.tab === t"></button>
                     </template>

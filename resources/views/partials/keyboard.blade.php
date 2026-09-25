@@ -17,7 +17,7 @@
     <div class="relative flex-1" style="aspect-ratio: 16 / 5;">
         <template x-for="k in $store.app.boardKeys" :key="'k' + k.slot">
             <button type="button"
-                    class="absolute pixel-border flex flex-col items-center justify-center gap-0.5 px-0.5 text-center cursor-pointer transition-none select-none
+                    class="absolute pixel-border text-text flex flex-col items-center justify-center gap-0.5 px-0.5 text-center cursor-pointer transition-none select-none
                            hover:brightness-105 active:translate-y-0.5 focus-visible:outline-dashed focus-visible:outline-2 focus-visible:outline-mauve"
                     :style="$store.app.keyStyle(k)"
                     :class="$store.app.keyClass(k)"
@@ -25,7 +25,7 @@
                     @click="$store.app.selectSlot(k.slot)">
                 <span class="block font-sans font-bold leading-none text-[7px] sm:text-[8px] opacity-60 truncate w-full"
                       x-text="k.name"></span>
-                <span class="block font-pixel leading-tight text-[6px] sm:text-[8px] truncate w-full"
+                <span class="hidden sm:block font-pixel leading-tight text-[6px] sm:text-[8px] truncate w-full"
                       x-text="$store.app.entryName($store.app.entryAt(k.slot))"></span>
             </button>
         </template>
