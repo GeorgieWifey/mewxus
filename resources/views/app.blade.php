@@ -43,38 +43,28 @@
             <line x1="26" y1="14" x2="30" y2="15" stroke="#4c4f69" stroke-width="1.5"/>
             <line x1="26" y1="18" x2="30" y2="18" stroke="#4c4f69" stroke-width="1.5"/>
             <!-- Eyes depending on mood -->
-            <template x-if="mascotMood === 'idle'">
-              <g>
-                <rect x="9" y="11" width="3" height="4" fill="#4c4f69"/>
-                <rect x="20" y="11" width="3" height="4" fill="#4c4f69"/>
-                <rect x="10" y="12" width="1" height="1" fill="#eff1f5"/>
-                <rect x="21" y="12" width="1" height="1" fill="#eff1f5"/>
-              </g>
-            </template>
-            <template x-if="mascotMood === 'happy'">
-              <g>
-                <path d="M9 13 Q10.5 10 12 13" stroke="#4c4f69" stroke-width="2" fill="none"/>
-                <path d="M20 13 Q21.5 10 23 13" stroke="#4c4f69" stroke-width="2" fill="none"/>
-              </g>
-            </template>
-            <template x-if="mascotMood === 'shocked'">
-              <g>
-                <circle cx="10.5" cy="13" r="2.5" fill="#4c4f69"/>
-                <circle cx="21.5" cy="13" r="2.5" fill="#4c4f69"/>
-              </g>
-            </template>
-            <template x-if="mascotMood === 'sleepy'">
-              <g>
-                <line x1="9" y1="13" x2="12" y2="13" stroke="#4c4f69" stroke-width="2"/>
-                <line x1="20" y1="13" x2="23" y2="13" stroke="#4c4f69" stroke-width="2"/>
-              </g>
-            </template>
-            <template x-if="mascotMood === 'typing'">
-              <g>
-                <rect x="9" y="11" width="3" height="3" fill="#8839ef"/>
-                <rect x="20" y="11" width="3" height="3" fill="#8839ef"/>
-              </g>
-            </template>
+            <g x-show="mascotMood === 'idle'">
+              <rect x="9" y="11" width="3" height="4" fill="#4c4f69"/>
+              <rect x="20" y="11" width="3" height="4" fill="#4c4f69"/>
+              <rect x="10" y="12" width="1" height="1" fill="#eff1f5"/>
+              <rect x="21" y="12" width="1" height="1" fill="#eff1f5"/>
+            </g>
+            <g x-show="mascotMood === 'happy'">
+              <path d="M9 13 Q10.5 10 12 13" stroke="#4c4f69" stroke-width="2" fill="none"/>
+              <path d="M20 13 Q21.5 10 23 13" stroke="#4c4f69" stroke-width="2" fill="none"/>
+            </g>
+            <g x-show="mascotMood === 'shocked'">
+              <circle cx="10.5" cy="13" r="2.5" fill="#4c4f69"/>
+              <circle cx="21.5" cy="13" r="2.5" fill="#4c4f69"/>
+            </g>
+            <g x-show="mascotMood === 'sleepy'">
+              <line x1="9" y1="13" x2="12" y2="13" stroke="#4c4f69" stroke-width="2"/>
+              <line x1="20" y1="13" x2="23" y2="13" stroke="#4c4f69" stroke-width="2"/>
+            </g>
+            <g x-show="mascotMood === 'typing'">
+              <rect x="9" y="11" width="3" height="3" fill="#8839ef"/>
+              <rect x="20" y="11" width="3" height="3" fill="#8839ef"/>
+            </g>
             <!-- Cheeks -->
             <rect x="7" y="16" width="3" height="2" fill="#ea76cb" opacity="0.8"/>
             <rect x="22" y="16" width="3" height="2" fill="#ea76cb" opacity="0.8"/>
