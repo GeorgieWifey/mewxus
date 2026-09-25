@@ -1,0 +1,124 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-26T03:45:00+08:00",
+  "title": "Design System: Mewxus",
+  "extensions": {
+    "colorMeta": {
+      "rosewater": { "role": "primary", "displayName": "Rosewater Cat", "canonical": "#dc8a78" },
+      "lavender": { "role": "primary", "displayName": "Lavender Press", "canonical": "#7287fd" },
+      "pink": { "role": "primary", "displayName": "Blush Pixel", "canonical": "#ea76cb" },
+      "green": { "role": "secondary", "displayName": "Save Green", "canonical": "#40a02b" },
+      "red": { "role": "secondary", "displayName": "Danger Red", "canonical": "#d20f39" },
+      "teal": { "role": "secondary", "displayName": "Travel Teal", "canonical": "#179299" },
+      "text": { "role": "neutral", "displayName": "Latte Ink", "canonical": "#4c4f69" },
+      "base": { "role": "neutral", "displayName": "Latte Ground", "canonical": "#eff1f5" },
+      "mantle": { "role": "neutral", "displayName": "Input Well", "canonical": "#e6e9ef" },
+      "crust": { "role": "neutral", "displayName": "Pixel Border", "canonical": "#dce0e8" },
+      "surface1": { "role": "neutral", "displayName": "Slider Track", "canonical": "#bcc0cc" },
+      "overlay0": { "role": "neutral", "displayName": "Drop Shadow", "canonical": "#9ca0b0" }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Pixel Whispers", "purpose": "Wordmark, gate headline, panel titles, key legends — never long copy." },
+      "body": { "displayName": "Warm Workhorse", "purpose": "All readable copy, labels, and data." }
+    },
+    "shadows": [
+      { "name": "shadow-btn", "value": "0 4px 0 0 #9ca0b0", "purpose": "Buttons and thumbs; removed while pressed." },
+      { "name": "shadow-key", "value": "0 3px 0 0 #9ca0b0", "purpose": "Keyboard keys and knobs; removed on live press." },
+      { "name": "shadow-panel", "value": "0 4px 0 0 #ccd0da", "purpose": "Panels and cards." }
+    ],
+    "motion": [
+      { "name": "press", "value": "translateY + shadow removal, no easing curve", "purpose": "Physical pixel press on every control." },
+      { "name": "tail-wag", "value": "rotate 0deg → -16deg, 1.8s ease-in-out infinite", "purpose": "Mascot idle life only." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "lg", "value": "1024px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Chunky pixel CTA with a hard drop shadow that presses down.",
+      "html": "<button class=\"ds-btn-primary\">Connect keyboard</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; background: rgba(220,138,120,.5); color: #4c4f69; border: 3px solid #dce0e8; box-shadow: 0 4px 0 0 #9ca0b0; font-family: Nunito, sans-serif; font-weight: 800; font-size: 16px; padding: 12px 20px; cursor: pointer; } .ds-btn-primary:hover { filter: brightness(1.05); } .ds-btn-primary:active { transform: translateY(4px); box-shadow: none; } .ds-btn-primary:focus-visible { outline: 3px dashed #8839ef; outline-offset: 2px; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Surface-grey variant for secondary actions.",
+      "html": "<button class=\"ds-btn-ghost\">Try demo cat</button>",
+      "css": ".ds-btn-ghost { display: inline-flex; align-items: center; justify-content: center; background: #bcc0cc; color: #4c4f69; border: 3px solid #dce0e8; box-shadow: 0 4px 0 0 #9ca0b0; font-family: Nunito, sans-serif; font-weight: 800; font-size: 16px; padding: 12px 20px; cursor: pointer; } .ds-btn-ghost:active { transform: translateY(4px); box-shadow: none; }"
+    },
+    {
+      "name": "Panel",
+      "kind": "card",
+      "refersTo": "panel",
+      "description": "Base panel with crust border and flat offset depth.",
+      "html": "<div class=\"ds-panel\"><h3 class=\"ds-panel-title\">BOARD BUDDY</h3></div>",
+      "css": ".ds-panel { background: #eff1f5; border: 3px solid #dce0e8; box-shadow: 0 4px 0 0 #ccd0da; padding: 16px; color: #4c4f69; } .ds-panel-title { font-family: 'Press Start 2P', monospace; font-size: 10px; letter-spacing: .02em; text-transform: uppercase; color: #5c5f77; margin: 0 0 8px; }"
+    },
+    {
+      "name": "Chip",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Tiny status chip for device/demo/busy state.",
+      "html": "<span class=\"ds-chip\">fw 118</span>",
+      "css": ".ds-chip { display: inline-flex; align-items: center; gap: 4px; border: 2px solid #dce0e8; background: #eff1f5; color: #4c4f69; padding: 2px 6px; font-family: Nunito, sans-serif; font-weight: 700; font-size: 12px; }"
+    },
+    {
+      "name": "Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Mantle-well text field with lavender focus border.",
+      "html": "<input class=\"ds-input\" placeholder=\"Preset name\">",
+      "css": ".ds-input { background: #e6e9ef; border: 3px solid #dce0e8; color: #4c4f69; caret-color: #4c4f69; font-family: Nunito, sans-serif; font-weight: 700; padding: 6px 8px; } .ds-input::placeholder { color: #5c5f77; } .ds-input:focus { outline: none; border-color: #7287fd; }"
+    },
+    {
+      "name": "Pixel Slider",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Square-track range control with a pressing square thumb.",
+      "html": "<input class=\"ds-slider\" type=\"range\" min=\"0\" max=\"100\" value=\"80\">",
+      "css": ".ds-slider { -webkit-appearance: none; appearance: none; height: 24px; background: transparent; cursor: pointer; } .ds-slider::-webkit-slider-runnable-track { height: 12px; background: #bcc0cc; border: 3px solid #dce0e8; } .ds-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; margin-top: -7px; background: #dc8a78; border: 3px solid #dce0e8; box-shadow: 0 3px 0 0 #9ca0b0; } .ds-slider:active::-webkit-slider-thumb { transform: translateY(3px); box-shadow: none; }"
+    },
+    {
+      "name": "Keyboard Key",
+      "kind": "custom",
+      "refersTo": "panel",
+      "description": "Signature pixel key with physical + assigned legend and press physics.",
+      "html": "<button class=\"ds-key\"><span class=\"ds-key-phys\">Tab</span><span class=\"ds-key-bind\">Tab</span></button>",
+      "css": ".ds-key { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; background: #ccd0da; border: 3px solid #dce0e8; box-shadow: 0 3px 0 0 #9ca0b0; color: #4c4f69; cursor: pointer; } .ds-key:active { transform: translateY(2px); box-shadow: none; } .ds-key-phys { font-family: Nunito, sans-serif; font-weight: 700; font-size: 8px; opacity: .6; } .ds-key-bind { font-family: 'Press Start 2P', monospace; font-size: 8px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "A keyboard configurator that feels like petting a cat",
+    "overview": "Mewxus wraps a hall-effect keyboard's raw USB protocol in a pastel pixel world. Everything is square, chunky, and pressed-like: 3px crust borders instead of radius, hard 4px offset shadows instead of blur, checker and dither fields instead of gradients. The Catppuccin Latte palette supplies every color. Cuteness lives in the chrome and the mascot; it never lives in the controls.",
+    "keyCharacteristics": [
+      "Zero border-radius anywhere; square corners are the world's signature",
+      "Hard offset shadows (no blur) as the only depth system",
+      "Press Start 2P reserved for headings/wordmark/mascot speech; Nunito carries all data",
+      "State fills are tints, not solid accents (readability floor >= 4.5:1)",
+      "Painted key colors are displayed blended 45% toward base; the device keeps the true RGB"
+    ],
+    "rules": [
+      { "name": "The Tint State Rule", "body": "Active/selected/pressed fills are accent tints (25–50% over base) with text ink — never solid accent fills with light text.", "section": "colors" },
+      { "name": "The No-Pure-Black Rule", "body": "No #000 or #fff anywhere; darkest ink is #4c4f69, lightest ground #eff1f5.", "section": "colors" },
+      { "name": "The Pixel-Whispers Rule", "body": "Press Start 2P never runs below 8px and never carries long copy.", "section": "typography" },
+      { "name": "The Press-Down Rule", "body": "Every pressable element moves down and loses its shadow when active — never scale, never blur.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do express every state as an accent tint at 25–50% with text ink.",
+      "Do keep depth as hard offset shadows that disappear on press.",
+      "Do blend displayed key paints toward base (45%) so labels stay legible."
+    ],
+    "donts": [
+      "Don't round any corner.",
+      "Don't use blurred shadows, gradients, or glass.",
+      "Don't put light text on mid-tone accent fills.",
+      "Don't use emoji or unicode glyphs as icons; draw pixel SVGs."
+    ]
+  }
+}
