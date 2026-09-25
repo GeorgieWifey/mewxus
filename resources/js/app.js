@@ -25,7 +25,7 @@ Alpine.data('keyboardDriver', () => ({
   },
 
   // UI state
-  activeTab: 'keymap', // 'keymap', 'lighting', 'rapid_trigger', 'visualizer', 'macros', 'presets', 'settings', 'firmware'
+  activeTab: 'keymap', // 'keymap', 'lighting', 'rapid_trigger', 'socd', 'switches', 'visualizer', 'macros', 'presets', 'settings', 'firmware'
   activeLayer: 0,
   selectedKeyIndex: null,
   selectedCategory: 'basic',
@@ -65,6 +65,38 @@ Alpine.data('keyboardDriver', () => ({
 
   // Travel history for real-time waveform visualizer (array of last 20 depth values)
   travelWaveform: Array(20).fill(0),
+
+  // SOCD (Snap Tap / Opposing Cardinal Directions) State
+  socdPairs: [
+    {
+      id: 1,
+      name: 'Counter-Strafe (A + D)',
+      key1Index: 29, // A (row 2 col 1)
+      key2Index: 31, // D (row 2 col 3)
+      priority: 0,   // 0 = Last Input (Snap Tap), 1 = Absolute, 2 = Neutral, 3 = Rappy Snappy
+      actuation: 1.5,
+      pressSensitivity: 0.15,
+      releaseSensitivity: 0.15,
+      enabled: true,
+    }
+  ],
+  socdPairIdCounter: 2,
+  newSocdKey1: 29,
+  newSocdKey2: 31,
+  newSocdPriority: 0,
+  newSocdActuation: 1.5,
+  newSocdPress: 0.15,
+  newSocdRelease: 0.15,
+
+  // Live SOCD resolution state for test pad
+  socdLiveOutput: {
+    activeKey: null,
+    resolution: 'IDLE',
+    key1Down: false,
+    key2Down: false,
+    key1Depth: 0.0,
+    key2Depth: 0.0,
+  },
 
   // Lighting state
   lighting: {
@@ -122,7 +154,7 @@ Alpine.data('keyboardDriver', () => ({
     this.transport = new HidTransport();
     this.protocol = new NexusProtocol(this.transport);
 
-    // Initialize keySwitchMap with default switch (Magnetic Jade Pro = 1)
+    // Initialize keySwitchMap with default switch
     LAYOUT_KEYS.forEach((_, idx) => {
       this.keySwitchMap[idx] = 1;
     });
@@ -149,13 +181,22 @@ Alpine.data('keyboardDriver', () => ({
       this.showToast('Preset removed', 'info');
     });
 
-    window.addEventListener('keydown', () => {
+    // Physical keystroke listener for live testing
+    window.addEventListener('keydown', (e) => {
       if (this.isConnected) {
         this.mascotMood = 'typing';
         clearTimeout(this.mascotTimer);
         this.mascotTimer = setTimeout(() => {
           this.mascotMood = 'idle';
         }, 1200);
+
+        this.updateSocdLiveSimulation();
+      }
+    });
+
+    window.addEventListener('keyup', () => {
+      if (this.isConnected) {
+        this.updateSocdLiveSimulation();
       }
     });
   },
@@ -343,9 +384,9 @@ Alpine.data('keyboardDriver', () => ({
         }
       }
 
-      // Push to waveform
       this.travelWaveform.shift();
       this.travelWaveform.push(this.currentTravelMm);
+      this.updateSocdLiveSimulation();
     }
   },
 
@@ -355,6 +396,170 @@ Alpine.data('keyboardDriver', () => ({
       if (match) return match.name;
     }
     return `K${code}`;
+  },
+
+  // SOCD Logic & Management
+  get isSocdConfigured() {
+    return this.socdPairs.length > 0;
+  },
+
+  isKeyInSocd(keyIndex) {
+    return this.socdPairs.some(p => p.enabled && (p.key1Index === keyIndex || p.key2Index === keyIndex));
+  },
+
+  getSocdPairForKey(keyIndex) {
+    return this.socdPairs.find(p => p.enabled && (p.key1Index === keyIndex || p.key2Index === keyIndex));
+  },
+
+  addQuickSocd(presetType) {
+    let k1 = 29, k2 = 31, name = 'Counter-Strafe (A + D)';
+    if (presetType === 'ws') {
+      k1 = 16; k2 = 30; name = 'Forward/Back (W + S)';
+    } else if (presetType === 'qe') {
+      k1 = 15; k2 = 17; name = 'Lean-Strafe (Q + E)';
+    }
+
+    this.socdPairs.push({
+      id: this.socdPairIdCounter++,
+      name,
+      key1Index: k1,
+      key2Index: k2,
+      priority: 0,
+      actuation: 1.5,
+      pressSensitivity: 0.15,
+      releaseSensitivity: 0.15,
+      enabled: true,
+    });
+
+    this.showToast(`Added SOCD pair: ${name}`, 'success');
+    this.syncSocdToHardware();
+  },
+
+  addCustomSocdPair() {
+    if (this.newSocdKey1 === this.newSocdKey2) {
+      this.showToast('Please select two different keys for SOCD pair', 'info');
+      return;
+    }
+
+    const k1Name = LAYOUT_KEYS[this.newSocdKey1]?.name || 'Key1';
+    const k2Name = LAYOUT_KEYS[this.newSocdKey2]?.name || 'Key2';
+
+    this.socdPairs.push({
+      id: this.socdPairIdCounter++,
+      name: `Custom (${k1Name} + ${k2Name})`,
+      key1Index: this.newSocdKey1,
+      key2Index: this.newSocdKey2,
+      priority: this.newSocdPriority,
+      actuation: this.newSocdActuation,
+      pressSensitivity: this.newSocdPress,
+      releaseSensitivity: this.newSocdRelease,
+      enabled: true,
+    });
+
+    this.showToast(`Created SOCD pair [${k1Name} + ${k2Name}]`, 'success');
+    this.syncSocdToHardware();
+  },
+
+  removeSocdPair(id) {
+    this.socdPairs = this.socdPairs.filter(p => p.id !== id);
+    this.showToast('Removed SOCD pair', 'info');
+    this.syncSocdToHardware();
+  },
+
+  async syncSocdToHardware() {
+    if (!this.isConnected) return;
+
+    try {
+      for (const pair of this.socdPairs) {
+        if (!pair.enabled) continue;
+
+        const k1 = this.layers[this.activeLayer][pair.key1Index];
+        const k2 = this.layers[this.activeLayer][pair.key2Index];
+        const slot1 = k1?.slotIndex !== undefined ? k1.slotIndex : pair.key1Index;
+        const slot2 = k2?.slotIndex !== undefined ? k2.slotIndex : pair.key2Index;
+
+        // Type 148 for SOCD, Type 147 for Rappy Snappy
+        const socdType = pair.priority === 3 ? 147 : 148;
+
+        // Set hardware key binding
+        await this.protocol.setUserKey(0, this.activeLayer, slot1, socdType, pair.priority, slot2);
+        await this.protocol.setUserKey(0, this.activeLayer, slot2, socdType, pair.priority, slot1);
+
+        // Set trigger params
+        await this.protocol.setKeyTrigger({
+          switch_type: this.keySwitchMap[pair.key1Index] || 0,
+          key_mode: 1,
+          key_actuation: pair.actuation,
+          rt_press: pair.pressSensitivity,
+          rt_release: pair.releaseSensitivity,
+        }, 0, slot1);
+
+        await this.protocol.setKeyTrigger({
+          switch_type: this.keySwitchMap[pair.key2Index] || 0,
+          key_mode: 1,
+          key_actuation: pair.actuation,
+          rt_press: pair.pressSensitivity,
+          rt_release: pair.releaseSensitivity,
+        }, 0, slot2);
+      }
+
+      this.showToast('SOCD settings synchronized to hardware', 'success');
+    } catch (err) {
+      console.error(err);
+      this.showToast('Error syncing SOCD to hardware', 'error');
+    }
+  },
+
+  updateSocdLiveSimulation() {
+    const pair = this.socdPairs.find(p => p.enabled);
+    if (!pair) {
+      this.socdLiveOutput = { activeKey: null, resolution: 'NO SOCD PAIR', key1Down: false, key2Down: false, key1Depth: 0, key2Depth: 0 };
+      return;
+    }
+
+    const d1 = this.pressedKeys[pair.key1Index] || 0;
+    const d2 = this.pressedKeys[pair.key2Index] || 0;
+    const k1Down = d1 >= pair.actuation;
+    const k2Down = d2 >= pair.actuation;
+    const k1Name = LAYOUT_KEYS[pair.key1Index]?.name || 'KEY 1';
+    const k2Name = LAYOUT_KEYS[pair.key2Index]?.name || 'KEY 2';
+
+    let resolution = 'IDLE';
+    let activeKey = null;
+
+    if (!k1Down && !k2Down) {
+      resolution = 'IDLE';
+    } else if (k1Down && !k2Down) {
+      activeKey = k1Name;
+      resolution = `${k1Name} ACTIVE`;
+    } else if (!k1Down && k2Down) {
+      activeKey = k2Name;
+      resolution = `${k2Name} ACTIVE`;
+    } else if (k1Down && k2Down) {
+      // Both keys pressed: resolve based on priority mode
+      if (pair.priority === 0) { // Last Input Priority / Snap Tap
+        activeKey = this.lastPressedKey === pair.key1Index ? k1Name : k2Name;
+        resolution = `LAST INPUT WIN (${activeKey})`;
+      } else if (pair.priority === 1) { // Absolute Priority / First Key Win
+        activeKey = this.lastPressedKey === pair.key1Index ? k2Name : k1Name;
+        resolution = `ABSOLUTE WIN (${activeKey})`;
+      } else if (pair.priority === 2) { // Neutral (Cancel Out)
+        activeKey = null;
+        resolution = 'NEUTRAL (CANCEL OUT)';
+      } else if (pair.priority === 3) { // Rappy Snappy (Deeper Key Priority)
+        activeKey = d1 >= d2 ? k1Name : k2Name;
+        resolution = `DEEPER KEY WIN (${activeKey} ${Math.max(d1, d2).toFixed(1)}mm)`;
+      }
+    }
+
+    this.socdLiveOutput = {
+      activeKey,
+      resolution,
+      key1Down,
+      key2Down,
+      key1Depth: d1,
+      key2Depth: d2,
+    };
   },
 
   // Switch Selector methods
@@ -566,12 +771,14 @@ Alpine.data('keyboardDriver', () => ({
     if (presetData.rapid_trigger) this.rapidTrigger = { ...this.rapidTrigger, ...presetData.rapid_trigger };
     if (presetData.base_config) this.baseConfig = { ...this.baseConfig, ...presetData.base_config };
     if (presetData.macros) this.macros = presetData.macros;
+    if (presetData.socd_pairs) this.socdPairs = presetData.socd_pairs;
 
     if (this.isConnected) {
       this.syncKeymap();
       this.updateLighting();
       this.updateRapidTrigger();
       this.updateBaseConfig();
+      this.syncSocdToHardware();
     }
 
     this.showToast(`Applied preset: ${presetData.name}`, 'success');

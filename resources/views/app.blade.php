@@ -212,12 +212,17 @@
                       <div class="flex justify-between items-start w-full relative z-10">
                         <span class="font-pixel text-[10px] font-bold leading-tight truncate"
                               x-text="layers[activeLayer][idx]?.name || k.name"></span>
-                        <span class="text-[8px] opacity-40 font-mono" x-text="idx"></span>
+                        <div class="flex items-center gap-1">
+                          <!-- SOCD Badge if key is in active pair -->
+                          <template x-if="isKeyInSocd(idx)">
+                            <span class="font-pixel text-[7px] px-1 bg-latte-red text-white font-bold">SOCD</span>
+                          </template>
+                          <span class="text-[8px] opacity-40 font-mono" x-text="idx"></span>
+                        </div>
                       </div>
 
                       <!-- Keycap bottom info & installed switch marker -->
                       <div class="flex justify-between items-end w-full text-[8px] relative z-10">
-                        <!-- Switch model triangle marker -->
                         <span class="inline-block w-2 h-2 border border-latte-text"
                               :style="{ backgroundColor: getSwitchColor(idx) }"
                               :title="switchTypes[keySwitchMap[idx] || 0]?.name || 'Switch'"></span>
@@ -298,6 +303,15 @@
                 :class="activeTab === 'rapid_trigger' ? 'pixel-btn-primary' : 'pixel-btn-secondary'">
           <x-pixel-icon name="zap" class="w-3.5 h-3.5" />
           <span>RAPID TRIGGER</span>
+        </button>
+
+        <!-- SOCD / Snap Tap Tab -->
+        <button type="button"
+                @click="activeTab = 'socd'"
+                class="pixel-btn text-[10px] flex items-center gap-1.5"
+                :class="activeTab === 'socd' ? 'pixel-btn-primary' : 'pixel-btn-secondary'">
+          <x-pixel-icon name="zap" class="w-3.5 h-3.5 text-latte-red" />
+          <span>SOCD (SNAP TAP)</span>
         </button>
 
         <!-- Dedicated Switch Selector Tab -->
@@ -576,7 +590,225 @@
         </div>
       </div>
 
-      <!-- Panel 4: Dedicated Switch Selector (15 Official Switches) -->
+      <!-- Panel 4: SOCD (Snap Tap / Opposing Cardinal Directions) -->
+      <div x-show="activeTab === 'socd'" class="flex flex-col gap-5">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          
+          <!-- Column 1 & 2: Pair Configurator & Active Pairs List -->
+          <div class="lg:col-span-2 pixel-box bg-latte-mantle p-4 flex flex-col gap-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-latte-surface1 pb-3">
+              <div>
+                <h3 class="font-pixel text-xs text-latte-mauve font-bold">SOCD / SNAP TAP / RAPPY SNAPPY</h3>
+                <p class="text-[10px] text-latte-subtext0">
+                  Hardware-level priority resolution between conflicting movement keys for instant counter-strafing.
+                </p>
+              </div>
+              <button type="button"
+                      @click="syncSocdToHardware()"
+                      class="pixel-btn-primary text-[10px] flex items-center gap-1.5 self-start sm:self-auto">
+                <x-pixel-icon name="save" class="w-3.5 h-3.5" />
+                <span>SYNC SOCD TO KEYBOARD</span>
+              </button>
+            </div>
+
+            <!-- Quick Preset Templates -->
+            <div class="flex flex-col gap-2">
+              <span class="font-pixel text-[10px] text-latte-subtext0 font-bold">QUICK TEMPLATES:</span>
+              <div class="flex flex-wrap gap-2">
+                <button type="button"
+                        @click="addQuickSocd('ad')"
+                        class="pixel-btn-rose text-[10px] flex items-center gap-1">
+                  <x-pixel-icon name="zap" class="w-3 h-3 text-latte-red" />
+                  <span>A + D (COUNTER-STRAFE)</span>
+                </button>
+                <button type="button"
+                        @click="addQuickSocd('ws')"
+                        class="pixel-btn-secondary text-[10px] flex items-center gap-1">
+                  <x-pixel-icon name="zap" class="w-3 h-3 text-latte-peach" />
+                  <span>W + S (FORWARD / BACK)</span>
+                </button>
+                <button type="button"
+                        @click="addQuickSocd('qe')"
+                        class="pixel-btn-secondary text-[10px] flex items-center gap-1">
+                  <x-pixel-icon name="zap" class="w-3 h-3 text-latte-teal" />
+                  <span>Q + E (LEAN STRAFE)</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Custom SOCD Creator Form -->
+            <div class="p-3 bg-latte-base border-2 border-latte-text flex flex-col gap-3">
+              <span class="font-pixel text-[10px] text-latte-mauve font-bold">+ CREATE NEW SOCD BINDING</span>
+              
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-[10px]">
+                <!-- Key 1 Select -->
+                <div class="flex flex-col gap-1">
+                  <span class="font-pixel text-latte-subtext0">KEY 1</span>
+                  <select x-model.number="newSocdKey1"
+                          class="px-2 py-1 bg-latte-mantle border border-latte-text font-pixel outline-none">
+                    <template x-for="(k, kIdx) in layoutKeys" :key="kIdx">
+                      <option :value="kIdx" x-text="k.name + ' (#' + kIdx + ')'"></option>
+                    </template>
+                  </select>
+                </div>
+
+                <!-- Key 2 Select -->
+                <div class="flex flex-col gap-1">
+                  <span class="font-pixel text-latte-subtext0">KEY 2</span>
+                  <select x-model.number="newSocdKey2"
+                          class="px-2 py-1 bg-latte-mantle border border-latte-text font-pixel outline-none">
+                    <template x-for="(k, kIdx) in layoutKeys" :key="kIdx">
+                      <option :value="kIdx" x-text="k.name + ' (#' + kIdx + ')'"></option>
+                    </template>
+                  </select>
+                </div>
+
+                <!-- Priority Mode -->
+                <div class="flex flex-col gap-1">
+                  <span class="font-pixel text-latte-subtext0">PRIORITY MODE</span>
+                  <select x-model.number="newSocdPriority"
+                          class="px-2 py-1 bg-latte-mantle border border-latte-text font-pixel outline-none">
+                    <option :value="0">0: Last Input (Snap Tap)</option>
+                    <option :value="1">1: Absolute (First Key Win)</option>
+                    <option :value="2">2: Neutral (Cancel Out)</option>
+                    <option :value="3">3: Rappy Snappy (Deeper Key)</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Sensitivities for custom pair -->
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-[10px] pt-2 border-t border-latte-surface1">
+                <div>
+                  <span class="font-pixel text-[9px] text-latte-subtext0">ACTUATION: <span class="text-latte-mauve" x-text="newSocdActuation + 'mm'"></span></span>
+                  <input type="range" min="0.1" max="3.5" step="0.1" x-model.number="newSocdActuation" class="pixel-slider mt-1">
+                </div>
+                <div>
+                  <span class="font-pixel text-[9px] text-latte-subtext0">RT PRESS: <span class="text-latte-peach" x-text="newSocdPress + 'mm'"></span></span>
+                  <input type="range" min="0.05" max="1.0" step="0.05" x-model.number="newSocdPress" class="pixel-slider mt-1">
+                </div>
+                <div>
+                  <span class="font-pixel text-[9px] text-latte-subtext0">RT RELEASE: <span class="text-latte-teal" x-text="newSocdRelease + 'mm'"></span></span>
+                  <input type="range" min="0.05" max="1.0" step="0.05" x-model.number="newSocdRelease" class="pixel-slider mt-1">
+                </div>
+              </div>
+
+              <div class="flex justify-end pt-1">
+                <button type="button"
+                        @click="addCustomSocdPair()"
+                        class="pixel-btn-primary text-[10px] flex items-center gap-1">
+                  <x-pixel-icon name="check" class="w-3 h-3" />
+                  <span>ADD SOCD BINDING</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- List of Configured SOCD Pairs -->
+            <div class="flex flex-col gap-2">
+              <span class="font-pixel text-[10px] text-latte-subtext0 font-bold">CONFIGURED SOCD PAIRS:</span>
+              <div class="flex flex-col gap-2 max-h-48 overflow-y-auto">
+                <template x-for="pair in socdPairs" :key="pair.id">
+                  <div class="p-2.5 bg-latte-base border border-latte-text flex items-center justify-between text-xs">
+                    <div class="flex items-center gap-3">
+                      <input type="checkbox"
+                             x-model="pair.enabled"
+                             @change="syncSocdToHardware()"
+                             class="pixel-checkbox">
+                      <div>
+                        <div class="flex items-center gap-2">
+                          <span class="font-pixel text-[10px] font-bold text-latte-text" x-text="pair.name"></span>
+                          <span class="font-pixel text-[8px] px-1 py-0.5 border border-latte-text"
+                                :class="{
+                                  'bg-latte-mauve text-latte-base': pair.priority === 0,
+                                  'bg-latte-teal text-latte-base': pair.priority === 1,
+                                  'bg-latte-surface1 text-latte-text': pair.priority === 2,
+                                  'bg-latte-peach text-latte-base': pair.priority === 3
+                                }"
+                                x-text="pair.priority === 0 ? 'LAST INPUT' : (pair.priority === 1 ? 'ABSOLUTE' : (pair.priority === 2 ? 'NEUTRAL' : 'DEEPER KEY'))">
+                          </span>
+                        </div>
+                        <span class="text-[9px] text-latte-subtext0"
+                              x-text="'Keys: [' + (layoutKeys[pair.key1Index]?.name) + '] + [' + (layoutKeys[pair.key2Index]?.name) + '] | Act: ' + pair.actuation + 'mm | RT: ' + pair.pressSensitivity + '/' + pair.releaseSensitivity + 'mm'"></span>
+                      </div>
+                    </div>
+
+                    <button type="button"
+                            @click="removeSocdPair(pair.id)"
+                            class="pixel-btn text-[9px] px-1.5 py-1 bg-latte-red text-latte-base border border-latte-text">
+                      <x-pixel-icon name="trash" class="w-3 h-3" />
+                    </button>
+                  </div>
+                </template>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Column 3: Live Interactive SOCD Resolution Arena -->
+          <div class="pixel-box bg-latte-mantle p-4 flex flex-col justify-between gap-4">
+            <div>
+              <h3 class="font-pixel text-xs text-latte-mauve font-bold mb-1">INTERACTIVE SOCD TEST ARENA</h3>
+              <p class="text-[10px] text-latte-subtext0 mb-4">
+                Press or click opposing keys to verify hardware resolution in real time.
+              </p>
+
+              <!-- Dual Key Status Indicators -->
+              <div class="grid grid-cols-2 gap-3 mb-4">
+                <div class="p-3 bg-latte-base border-2 border-latte-text text-center flex flex-col gap-1 transition-all"
+                     :class="{ 'bg-latte-pink text-white border-latte-mauve translate-y-1': socdLiveOutput.key1Down }">
+                  <span class="font-pixel text-xs font-bold" x-text="layoutKeys[socdPairs[0]?.key1Index || 29]?.name || 'KEY 1'"></span>
+                  <span class="text-[9px] font-mono" x-text="(socdLiveOutput.key1Depth).toFixed(2) + 'mm'"></span>
+                  <span class="font-pixel text-[8px] mt-1" x-text="socdLiveOutput.key1Down ? 'PRESSED' : 'RELEASED'"></span>
+                </div>
+
+                <div class="p-3 bg-latte-base border-2 border-latte-text text-center flex flex-col gap-1 transition-all"
+                     :class="{ 'bg-latte-pink text-white border-latte-mauve translate-y-1': socdLiveOutput.key2Down }">
+                  <span class="font-pixel text-xs font-bold" x-text="layoutKeys[socdPairs[0]?.key2Index || 31]?.name || 'KEY 2'"></span>
+                  <span class="text-[9px] font-mono" x-text="(socdLiveOutput.key2Depth).toFixed(2) + 'mm'"></span>
+                  <span class="font-pixel text-[8px] mt-1" x-text="socdLiveOutput.key2Down ? 'PRESSED' : 'RELEASED'"></span>
+                </div>
+              </div>
+
+              <!-- Output Resolution Display -->
+              <div class="p-3 bg-latte-base border-2 border-latte-text flex flex-col gap-2 text-center">
+                <span class="font-pixel text-[9px] text-latte-subtext0">CURRENT HARDWARE OUTPUT:</span>
+                <span class="font-pixel text-xs font-bold"
+                      :class="{
+                        'text-latte-mauve': socdLiveOutput.activeKey,
+                        'text-latte-subtext1': !socdLiveOutput.activeKey
+                      }"
+                      x-text="socdLiveOutput.resolution">
+                </span>
+
+                <!-- Left / Right Balance Bar -->
+                <div class="w-full bg-latte-crust h-4 border border-latte-text relative overflow-hidden flex items-center">
+                  <div class="absolute left-1/2 -translate-x-1/2 w-0.5 h-full bg-latte-text z-10"></div>
+                  <!-- Left Indicator -->
+                  <div class="h-full bg-latte-mauve transition-all duration-75 absolute right-1/2"
+                       :style="{ width: socdLiveOutput.activeKey === (layoutKeys[socdPairs[0]?.key1Index]?.name) ? '50%' : '0%' }"></div>
+                  <!-- Right Indicator -->
+                  <div class="h-full bg-latte-mauve transition-all duration-75 absolute left-1/2"
+                       :style="{ width: socdLiveOutput.activeKey === (layoutKeys[socdPairs[0]?.key2Index]?.name) ? '50%' : '0%' }"></div>
+                </div>
+                <div class="flex justify-between text-[8px] font-pixel text-latte-subtext1">
+                  <span>← STRAFE LEFT</span>
+                  <span>CENTER</span>
+                  <span>STRAFE RIGHT →</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Priority Mode Doctrine Summary -->
+            <div class="p-2.5 bg-latte-base border border-latte-surface1 text-[9px] text-latte-subtext0 flex flex-col gap-1">
+              <span class="font-pixel text-latte-text font-bold">PRIORITY GUIDE:</span>
+              <p>• <strong>Last Input (Snap Tap)</strong>: Latest key takes instant command without letting go of previous key.</p>
+              <p>• <strong>Rappy Snappy</strong>: Compares physical Hall sensor depths dynamically.</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Panel 5: Dedicated Switch Selector (15 Official Switches) -->
       <div x-show="activeTab === 'switches'" class="flex flex-col gap-5">
         <div class="pixel-box bg-latte-mantle p-4 flex flex-col gap-4">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-latte-surface1 pb-3">
@@ -604,7 +836,6 @@
             </div>
           </div>
 
-          <!-- Switch Models Grid -->
           <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
             <template x-for="sw in switchTypes" :key="sw.value">
               <button type="button"
@@ -627,62 +858,50 @@
         </div>
       </div>
 
-      <!-- Panel 5: Dedicated Keypress Visualizer (Mechanical Cutaway & Waveform) -->
+      <!-- Panel 6: Dedicated Keypress Visualizer (Mechanical Cutaway & Waveform) -->
       <div x-show="activeTab === 'visualizer'" class="flex flex-col gap-5">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
           
-          <!-- Mechanical Switch Animated Cutaway -->
           <div class="pixel-box bg-latte-mantle p-4 flex flex-col items-center justify-between gap-4">
             <div class="w-full">
               <h3 class="font-pixel text-xs text-latte-mauve font-bold mb-1">HALL EFFECT MECHANICAL CUTAWAY</h3>
               <p class="text-[10px] text-latte-subtext0 mb-4">Live physical switch stem depression via WebHID <code class="bg-latte-base px-1 border border-latte-surface1">0xA0</code>.</p>
             </div>
 
-            <!-- SVG Switch Cutaway Visualizer -->
             <div class="w-56 h-64 bg-latte-base border-3 border-latte-text shadow-[3px_3px_0_0_#4c4f69] p-3 flex flex-col justify-between relative overflow-hidden">
-              
-              <!-- Housing Top -->
               <div class="w-full flex justify-between items-center text-[8px] font-pixel text-latte-subtext1 border-b border-latte-surface1 pb-1">
                 <span>TOP HOUSING</span>
                 <span x-text="currentTravelMm > rapidTrigger.globalActuation ? 'ACTIVE' : 'IDLE'"
                       :class="currentTravelMm > rapidTrigger.globalActuation ? 'text-latte-green font-bold' : 'text-latte-subtext0'"></span>
               </div>
 
-              <!-- Animated Stem & Magnet Chamber -->
               <div class="relative w-full flex-grow flex items-center justify-center my-2">
-                <!-- Actuation Threshold Reference Line -->
                 <div class="absolute left-0 right-0 border-t-2 border-dashed border-latte-red z-10"
                      :style="{ top: ((rapidTrigger.globalActuation / currentMaxTravel) * 100) + '%' }">
                   <span class="absolute right-1 -top-3 text-[7px] font-pixel text-latte-red font-bold"
                         x-text="'ACT: ' + rapidTrigger.globalActuation + 'mm'"></span>
                 </div>
 
-                <!-- Moving Switch Stem -->
                 <div class="w-24 bg-latte-mauve border-2 border-latte-text transition-transform duration-75 relative"
                      :style="{
                        height: '70px',
                        transform: 'translateY(' + ((currentTravelMm / currentMaxTravel) * 60) + 'px)'
                      }">
-                  <!-- Cross Mount -->
                   <div class="absolute -top-3 left-1/2 -translate-x-1/2 w-6 h-3 bg-latte-pink border border-latte-text"></div>
-                  <!-- Magnet in stem base -->
                   <div class="absolute bottom-1 left-1/2 -translate-x-1/2 w-12 h-3 bg-latte-peach border border-latte-text flex items-center justify-center text-[7px] text-white font-bold">
                     MAGNET
                   </div>
                 </div>
 
-                <!-- Return Spring Coil Representation -->
                 <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-8 border-b-2 border-dashed border-latte-overlay1 z-0"></div>
               </div>
 
-              <!-- Bottom Sensor Base -->
               <div class="w-full bg-latte-surface0 p-1.5 border border-latte-text flex justify-between items-center text-[9px] font-pixel">
                 <span class="text-latte-teal font-bold">HALL SENSOR</span>
                 <span class="text-latte-mauve font-bold" x-text="currentTravelMm.toFixed(2) + ' mm'"></span>
               </div>
             </div>
 
-            <!-- Digital Readout Gauge -->
             <div class="w-full grid grid-cols-2 gap-2 text-center text-[9px] font-pixel">
               <div class="p-2 bg-latte-base border border-latte-text">
                 <span class="text-latte-subtext0 block">CURRENT DEPTH</span>
@@ -695,7 +914,6 @@
             </div>
           </div>
 
-          <!-- Live Travel Waveform Chart -->
           <div class="lg:col-span-2 pixel-box bg-latte-mantle p-4 flex flex-col justify-between gap-4">
             <div>
               <div class="flex items-center justify-between mb-2">
@@ -704,9 +922,7 @@
               </div>
               <p class="text-[10px] text-latte-subtext0 mb-4">Visualizes continuous Hall sensor readings while pressing switches.</p>
 
-              <!-- Waveform Bar Chart -->
               <div class="h-44 bg-latte-base border-2 border-latte-text p-2 flex items-end justify-between gap-1 relative overflow-hidden">
-                <!-- Actuation Threshold Horizontal Line -->
                 <div class="absolute left-0 right-0 border-t border-dashed border-latte-red pointer-events-none"
                      :style="{ bottom: ((rapidTrigger.globalActuation / currentMaxTravel) * 100) + '%' }"></div>
 
@@ -720,7 +936,6 @@
               </div>
             </div>
 
-            <!-- Heat matrix summary -->
             <div class="p-3 bg-latte-base border border-latte-text text-[10px] flex flex-col gap-2">
               <span class="font-pixel font-bold text-latte-text">ACTIVE ACTUATIONS:</span>
               <div class="flex flex-wrap gap-2">
@@ -738,7 +953,7 @@
         </div>
       </div>
 
-      <!-- Panel 6: 16-Slot Macro Editor -->
+      <!-- Panel 7: 16-Slot Macro Editor -->
       <div x-show="activeTab === 'macros'" class="flex flex-col gap-4">
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div class="pixel-box bg-latte-mantle p-3 flex flex-col gap-1">
@@ -819,13 +1034,13 @@
         </div>
       </div>
 
-      <!-- Panel 7: Presets Vault (HTMX Powered) -->
+      <!-- Panel 8: Presets Vault (HTMX Powered) -->
       <div x-show="activeTab === 'presets'" class="flex flex-col gap-4">
         
         <div class="pixel-box bg-latte-mantle p-4 flex flex-col md:flex-row items-center justify-between gap-3">
           <div>
             <h3 class="font-pixel text-xs text-latte-mauve font-bold">SAVE CURRENT SETUP AS PRESET</h3>
-            <p class="text-[10px] text-latte-subtext0">Captures all 4 layers, RGB lighting, Rapid Trigger settings, and base config.</p>
+            <p class="text-[10px] text-latte-subtext0">Captures all 4 layers, RGB lighting, Rapid Trigger settings, SOCD pairs, and base config.</p>
           </div>
 
           <form hx-post="{{ route('presets.store') }}"
@@ -837,6 +1052,7 @@
             <input type="hidden" name="rapid_trigger" :value="JSON.stringify(rapidTrigger)">
             <input type="hidden" name="base_config" :value="JSON.stringify(baseConfig)">
             <input type="hidden" name="macros" :value="JSON.stringify(macros)">
+            <input type="hidden" name="socd_pairs" :value="JSON.stringify(socdPairs)">
 
             <input type="text"
                    name="name"
@@ -915,7 +1131,7 @@
 
       </div>
 
-      <!-- Panel 8: Hardware Settings & Gaming Options -->
+      <!-- Panel 9: Hardware Settings & Gaming Options -->
       <div x-show="activeTab === 'settings'" class="flex flex-col gap-5">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
           
@@ -1036,7 +1252,7 @@
         </div>
       </div>
 
-      <!-- Panel 9: Official Firmware Proxy & Updater -->
+      <!-- Panel 10: Official Firmware Proxy & Updater -->
       <div x-show="activeTab === 'firmware'" class="flex flex-col gap-4">
         <div class="pixel-box bg-latte-mantle p-5 flex flex-col gap-4">
           <div class="flex items-start justify-between gap-4">
