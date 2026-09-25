@@ -18,8 +18,7 @@
       "overlay0": { "role": "neutral", "displayName": "Drop Shadow", "canonical": "#9ca0b0" }
     },
     "typographyMeta": {
-      "display": { "displayName": "Pixel Whispers", "purpose": "Wordmark, gate headline, panel titles, key legends — never long copy." },
-      "body": { "displayName": "Warm Workhorse", "purpose": "All readable copy, labels, and data." }
+      "display": { "displayName": "Bitmap Everything", "purpose": "Press Start 2P is the only face — headings, body, labels, data. Single weight; 8–11px for dense UI, 8/16px for crisp sizes." }
     },
     "shadows": [
       { "name": "shadow-btn", "value": "0 4px 0 0 #9ca0b0", "purpose": "Buttons and thumbs; removed while pressed." },
@@ -42,7 +41,7 @@
       "refersTo": "button-primary",
       "description": "Chunky pixel CTA with a hard drop shadow that presses down.",
       "html": "<button class=\"ds-btn-primary\">Connect keyboard</button>",
-      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; background: rgba(220,138,120,.5); color: #4c4f69; border: 3px solid #dce0e8; box-shadow: 0 4px 0 0 #9ca0b0; font-family: Nunito, sans-serif; font-weight: 800; font-size: 16px; padding: 12px 20px; cursor: pointer; } .ds-btn-primary:hover { filter: brightness(1.05); } .ds-btn-primary:active { transform: translateY(4px); box-shadow: none; } .ds-btn-primary:focus-visible { outline: 3px dashed #8839ef; outline-offset: 2px; }"
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; background: rgba(220,138,120,.5); color: #4c4f69; border: 3px solid #dce0e8; box-shadow: 0 4px 0 0 #9ca0b0; font-family: 'Press Start 2P', monospace; font-weight: 400; font-size: 16px; padding: 12px 20px; cursor: pointer; } .ds-btn-primary:hover { filter: brightness(1.05); } .ds-btn-primary:active { transform: translateY(4px); box-shadow: none; } .ds-btn-primary:focus-visible { outline: 3px dashed #8839ef; outline-offset: 2px; }"
     },
     {
       "name": "Secondary Button",
@@ -50,7 +49,7 @@
       "refersTo": "button-ghost",
       "description": "Surface-grey variant for secondary actions.",
       "html": "<button class=\"ds-btn-ghost\">Try demo cat</button>",
-      "css": ".ds-btn-ghost { display: inline-flex; align-items: center; justify-content: center; background: #bcc0cc; color: #4c4f69; border: 3px solid #dce0e8; box-shadow: 0 4px 0 0 #9ca0b0; font-family: Nunito, sans-serif; font-weight: 800; font-size: 16px; padding: 12px 20px; cursor: pointer; } .ds-btn-ghost:active { transform: translateY(4px); box-shadow: none; }"
+      "css": ".ds-btn-ghost { display: inline-flex; align-items: center; justify-content: center; background: #bcc0cc; color: #4c4f69; border: 3px solid #dce0e8; box-shadow: 0 4px 0 0 #9ca0b0; font-family: 'Press Start 2P', monospace; font-weight: 400; font-size: 16px; padding: 12px 20px; cursor: pointer; } .ds-btn-ghost:active { transform: translateY(4px); box-shadow: none; }"
     },
     {
       "name": "Panel",
@@ -66,7 +65,7 @@
       "refersTo": "chip",
       "description": "Tiny status chip for device/demo/busy state.",
       "html": "<span class=\"ds-chip\">fw 118</span>",
-      "css": ".ds-chip { display: inline-flex; align-items: center; gap: 4px; border: 2px solid #dce0e8; background: #eff1f5; color: #4c4f69; padding: 2px 6px; font-family: Nunito, sans-serif; font-weight: 700; font-size: 12px; }"
+      "css": ".ds-chip { display: inline-flex; align-items: center; gap: 4px; border: 2px solid #dce0e8; background: #eff1f5; color: #4c4f69; padding: 2px 6px; font-family: 'Press Start 2P', monospace; font-weight: 400; font-size: 12px; }"
     },
     {
       "name": "Input",
@@ -74,7 +73,7 @@
       "refersTo": "input",
       "description": "Mantle-well text field with lavender focus border.",
       "html": "<input class=\"ds-input\" placeholder=\"Preset name\">",
-      "css": ".ds-input { background: #e6e9ef; border: 3px solid #dce0e8; color: #4c4f69; caret-color: #4c4f69; font-family: Nunito, sans-serif; font-weight: 700; padding: 6px 8px; } .ds-input::placeholder { color: #5c5f77; } .ds-input:focus { outline: none; border-color: #7287fd; }"
+      "css": ".ds-input { background: #e6e9ef; border: 3px solid #dce0e8; color: #4c4f69; caret-color: #4c4f69; font-family: 'Press Start 2P', monospace; font-weight: 400; padding: 6px 8px; } .ds-input::placeholder { color: #5c5f77; } .ds-input:focus { outline: none; border-color: #7287fd; }"
     },
     {
       "name": "Pixel Slider",
@@ -90,7 +89,7 @@
       "refersTo": "panel",
       "description": "Signature pixel key with physical + assigned legend and press physics.",
       "html": "<button class=\"ds-key\"><span class=\"ds-key-phys\">Tab</span><span class=\"ds-key-bind\">Tab</span></button>",
-      "css": ".ds-key { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; background: #ccd0da; border: 3px solid #dce0e8; box-shadow: 0 3px 0 0 #9ca0b0; color: #4c4f69; cursor: pointer; } .ds-key:active { transform: translateY(2px); box-shadow: none; } .ds-key-phys { font-family: Nunito, sans-serif; font-weight: 700; font-size: 8px; opacity: .6; } .ds-key-bind { font-family: 'Press Start 2P', monospace; font-size: 8px; }"
+      "css": ".ds-key { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; background: #ccd0da; border: 3px solid #dce0e8; box-shadow: 0 3px 0 0 #9ca0b0; color: #4c4f69; cursor: pointer; } .ds-key:active { transform: translateY(2px); box-shadow: none; } .ds-key-phys { font-family: 'Press Start 2P', monospace; font-weight: 400; font-size: 8px; opacity: .6; } .ds-key-bind { font-family: 'Press Start 2P', monospace; font-size: 8px; }"
     }
   ],
   "narrative": {
@@ -99,14 +98,14 @@
     "keyCharacteristics": [
       "Zero border-radius anywhere; square corners are the world's signature",
       "Hard offset shadows (no blur) as the only depth system",
-      "Press Start 2P reserved for headings/wordmark/mascot speech; Nunito carries all data",
+      "Press Start 2P everywhere — headings, body, labels, data; the only face in the system",
       "State fills are tints, not solid accents (readability floor >= 4.5:1)",
       "Painted key colors are displayed blended 45% toward base; the device keeps the true RGB"
     ],
     "rules": [
       { "name": "The Tint State Rule", "body": "Active/selected/pressed fills are accent tints (25–50% over base) with text ink — never solid accent fills with light text.", "section": "colors" },
       { "name": "The No-Pure-Black Rule", "body": "No #000 or #fff anywhere; darkest ink is #4c4f69, lightest ground #eff1f5.", "section": "colors" },
-      { "name": "The Pixel-Whispers Rule", "body": "Press Start 2P never runs below 8px and never carries long copy.", "section": "typography" },
+      { "name": "The Bitmap Sizes Rule", "body": "8px and 16px are crisp; 10–11px for dense UI is accepted. Never below 8px, never synthetic bold or italic.", "section": "typography" },
       { "name": "The Press-Down Rule", "body": "Every pressable element moves down and loses its shadow when active — never scale, never blur.", "section": "elevation" }
     ],
     "dos": [

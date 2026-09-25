@@ -43,7 +43,15 @@ export default defineConfig({
     colors: { ...latte },
     fontFamily: {
       pixel: ['"Press Start 2P"', 'monospace'],
-      sans: ['Nunito', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+      // pixel type everywhere: font-sans resolves to the bitmap face too
+      sans: ['"Press Start 2P"', 'monospace'],
+    },
+    // Press Start 2P ships a single weight; neutralize synthetic bold
+    fontWeight: {
+      semibold: '400',
+      bold: '400',
+      extrabold: '400',
+      black: '400',
     },
   },
   shortcuts: {
@@ -55,7 +63,7 @@ export default defineConfig({
     'pixel-btn-green': 'bg-green/40 text-text',
     'pixel-btn-red': 'bg-red/25 text-text',
     'pixel-btn-blue': 'bg-lavender/40 text-text',
-    'pixel-chip': 'inline-flex items-center gap-1 border-2 border-crust px-1.5 py-0.5 font-sans font-bold text-xs',
+    'pixel-chip': 'inline-flex items-center gap-1 border-2 border-crust px-1.5 py-0.5 font-sans font-bold text-[10px]',
     'pixel-input': 'bg-mantle border-3 border-crust px-2 py-1.5 font-sans font-bold text-text placeholder:text-subtext1 focus:outline-none focus:border-lavender',
     'panel-title': 'font-pixel text-[10px] tracking-wide text-subtext1 uppercase',
   },

@@ -31,18 +31,19 @@ colors:
 typography:
   display:
     fontFamily: '"Press Start 2P", monospace'
-    fontSize: "10px–2rem by context"
+    fontSize: "8px–2rem by context (8px multiples are crisp)"
     fontWeight: 400
-    lineHeight: 1.6
-    letterSpacing: "0.02em"
+    lineHeight: 1.7
+    letterSpacing: "normal"
   body:
-    fontFamily: "Nunito, ui-sans-serif, system-ui, sans-serif"
-    fontWeight: 700
-    lineHeight: 1.5
+    fontFamily: '"Press Start 2P", monospace'
+    fontWeight: 400
+    fontSize: "10–11px"
+    lineHeight: 1.7
   label:
-    fontFamily: "Nunito, ui-sans-serif, system-ui, sans-serif"
-    fontWeight: 800
-    fontSize: "10–12px"
+    fontFamily: '"Press Start 2P", monospace'
+    fontWeight: 400
+    fontSize: "8–10px"
 components:
   button-primary:
     backgroundColor: "{colors.rosewater}"
@@ -76,7 +77,7 @@ Cuteness lives in the chrome and the mascot (an inline-SVG pixel cat that reacts
 **Key Characteristics:**
 - Zero border-radius anywhere; square corners are the world's signature
 - Hard offset shadows (no blur) as the only depth system
-- Press Start 2P reserved for headings/wordmark/mascot speech; Nunito carries all data
+- Press Start 2P everywhere — headings, body, labels, data; the only face in the system
 - State fills are tints, not solid accents (readability floor ≥ 4.5:1)
 - Painted key colors are displayed blended 45% toward base; the device keeps the true RGB
 
@@ -108,19 +109,19 @@ The full Catppuccin Latte palette is the system; accents appear as tints for sta
 
 ## Typography
 
-**Display Font:** Press Start 2P (monospace fallback) — 8px bitmap pixel face.
-**Body Font:** Nunito (weights 600/700/800).
+**Font:** Press Start 2P — the only face. Bitmap type is used for everything: headings, body copy, labels, data, inputs.
 
-**Character:** A bitmap display voice paired with a rounded, warm workhorse — the pixel font whispers headings, Nunito does all the reading.
+**Character:** One bitmap voice for the whole world. It demands generosity: small sizes (8–11px) for dense UI, real line-height (1.7) so glyphs never clip, and no synthetic bold/italic (the font ships a single weight).
 
 ### Hierarchy
-- **Display** (400, 1.5–2rem, lh 1.6): the Mewxus wordmark and the gate headline only.
-- **Title** (400, 10–12px, lh 1.6): panel titles (uppercase), tab labels, keyboard key legends, macro chips.
-- **Body** (700, 13–16px): panel copy, statuses, hints.
-- **Label** (800, 10–12px): buttons, chips, form labels, dense data.
+- **Display** (400, 1.5–2rem): the Mewxus wordmark and the gate headline only.
+- **Title** (400, 10px, uppercase): panel titles, tab labels.
+- **Body** (400, 10–11px, lh 1.7): all copy, hints, statuses.
+- **Label** (400, 8px): keyboard key legends, macro chips, dense controls.
 
 ### Named Rules
-**The Pixel-Whispers Rule.** Press Start 2P never runs below 8px and never carries long copy; anything a user must *read* is Nunito.
+**The Bitmap Sizes Rule.** 8px and 16px are crisp (integer multiples of the 8px em); 10–11px for dense UI is accepted. Never below 8px, never synthetic bold/italic.
+**The Contained Rule.** Because UnoCSS ships no preflight, `box-sizing: border-box` is asserted globally in app.css — bordered+padded elements must never overflow their containers.
 
 ## Layout
 
@@ -145,24 +146,24 @@ No border-radius at any size, any component. Borders are 3px solid `crust` (2px 
 ## Components
 
 ### Buttons
-- **Shape:** square, 3px crust border, hard drop shadow, Nunito 800.
+- **Shape:** square, 3px crust border, hard drop shadow, Press Start 2P 10–16px.
 - **Primary:** rosewater 50% tint fill, `text` ink ("Connect keyboard").
 - **Active/selected state:** accent tints — lavender/40 (tabs), rosewater/50 (Assign), pink/40 (Paint).
 - **Danger:** red 25% tint with crust border (identity via fill+context+confirm dialogs, not red text).
 - **Focus:** 3px dashed mauve outline, offset 2px.
 
 ### Chips
-- **Style:** 2px crust border, base fill, Nunito bold 12px; tinted fills (green/20, pink/20, yellow/20) for device/demo/busy state.
+- **Style:** 2px crust border, base fill, pixel 10px; tinted fills (green/20, pink/20, yellow/20) for device/demo/busy state.
 
 ### Cards / Containers
 - **Panel:** base fill, 3px crust border, shadow-panel; internal padding 12–16px; panel titles in pixel font 10px uppercase subtext1.
 
 ### Inputs / Fields
-- **Style:** mantle fill, 3px crust border, Nunito 700; sliders are custom — 12px square-track (surface1, crust border) with a 20px square rosewater thumb that presses down on drag; checkboxes/radios use pink accent-color; caret is `text`.
+- **Style:** mantle fill, 3px crust border, pixel 10–11px; sliders are custom — 12px square-track (surface1, crust border) with a 20px square rosewater thumb that presses down on drag; checkboxes/radios use pink accent-color; caret is `text`.
 - **Focus:** dashed mauve outline; focus border shifts to lavender.
 
 ### Keyboard (signature)
-61 absolutely-positioned pixel keys plus 5 knob squares. Each key: 3px crust border, drop shadow, two stacked labels — physical name (Nunito bold, 7–8px, 60% ink) over the assigned binding (pixel font 6–8px). Painted keys show the blended device color as fill; selected key switches its border to flamingo; a live physical press sinks the key and flashes a green tint. Below `sm`, only the physical name renders.
+61 absolutely-positioned pixel keys plus 5 knob squares. Each key: 3px crust border, drop shadow, two stacked pixel labels — physical name over the assigned binding, both 8px. Painted keys show the blended device color as fill; selected key switches its border to flamingo; a live physical press sinks the key and flashes a green tint. Below `sm`, only the physical name renders.
 
 ## Do's and Don'ts
 

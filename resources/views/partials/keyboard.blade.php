@@ -23,9 +23,9 @@
                     :class="$store.app.keyClass(k)"
                     :aria-label="'Key ' + k.name"
                     @click="$store.app.selectSlot(k.slot)">
-                <span class="block font-sans font-bold leading-none text-[7px] sm:text-[8px] opacity-60 truncate w-full"
+                <span class="block font-sans font-bold leading-none text-[8px] truncate w-full"
                       x-text="k.name"></span>
-                <span class="hidden sm:block font-pixel leading-tight text-[6px] sm:text-[8px] truncate w-full"
+                <span class="hidden sm:block font-pixel leading-none text-[8px] truncate w-full"
                       x-text="$store.app.entryName($store.app.entryAt(k.slot))"></span>
             </button>
         </template>

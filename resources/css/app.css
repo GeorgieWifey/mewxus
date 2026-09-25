@@ -1,8 +1,49 @@
 /* Mewxus — pastel pixel world on Catppuccin Latte. */
 @import '@fontsource/press-start-2p/400.css';
-@import '@fontsource/nunito/600.css';
-@import '@fontsource/nunito/700.css';
-@import '@fontsource/nunito/800.css';
+
+/* Minimal reset: UnoCSS ships no preflight, and without box-sizing:border-box
+   bordered+padded inputs overflow their containers (the "flowing out" bug). */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    border: 0 solid #dce0e8;
+}
+
+body {
+    margin: 0;
+    line-height: 1.7;
+}
+
+h1, h2, h3, h4, p, figure {
+    margin: 0;
+}
+
+ul, ol {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+img, svg, video {
+    display: block;
+    vertical-align: middle;
+}
+
+button, input, select, textarea {
+    font: inherit;
+    letter-spacing: inherit;
+    color: inherit;
+}
+
+input, select, textarea {
+    background-color: transparent;
+}
+
+/* bitmap font: never synthesize italic on top of it */
+em, i {
+    font-style: normal;
+}
 
 .htmx-swapping {
     opacity: 0.3;
