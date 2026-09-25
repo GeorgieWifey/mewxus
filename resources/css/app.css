@@ -1,0 +1,152 @@
+@import '@unocss/reset/tailwind.css';
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Silkscreen:wght@400;700&display=swap');
+
+:root {
+  --color-rosewater: #dc8a78;
+  --color-flamingo: #dd7878;
+  --color-pink: #ea76cb;
+  --color-mauve: #8839ef;
+  --color-red: #d20f39;
+  --color-maroon: #e64553;
+  --color-peach: #fe640b;
+  --color-yellow: #df8e1d;
+  --color-green: #40a02b;
+  --color-teal: #179299;
+  --color-sky: #04a5e5;
+  --color-sapphire: #209fb5;
+  --color-blue: #1e66f5;
+  --color-lavender: #7287fd;
+  --color-text: #4c4f69;
+  --color-subtext1: #5c5f77;
+  --color-subtext0: #6c6f85;
+  --color-overlay2: #7c7f93;
+  --color-overlay1: #8c8fa1;
+  --color-overlay0: #9ca0b0;
+  --color-surface2: #acb0be;
+  --color-surface1: #bcc0cc;
+  --color-surface0: #ccd0da;
+  --color-base: #eff1f5;
+  --color-mantle: #e6e9ef;
+  --color-crust: #dce0e8;
+}
+
+body {
+  font-family: 'Nunito', system-ui, -apple-system, sans-serif;
+  color: var(--color-text);
+  background-color: var(--color-mantle);
+  background-image: 
+    radial-gradient(var(--color-surface0) 1px, transparent 1px),
+    radial-gradient(var(--color-surface0) 1px, var(--color-mantle) 1px);
+  background-size: 20px 20px;
+  background-position: 0 0, 10px 10px;
+  min-height: 100vh;
+}
+
+/* Custom scrollbars themed to Catppuccin Latte */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-crust);
+  border: 1px solid var(--color-surface1);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-surface1);
+  border: 2px solid var(--color-crust);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-mauve);
+}
+
+/* Text selection */
+::selection {
+  background: var(--color-pink);
+  color: #ffffff;
+}
+
+/* Tactile Pixel Keycaps */
+.pixel-key {
+  position: relative;
+  user-select: none;
+  border: 2px solid var(--color-text);
+  box-shadow: 0 4px 0 0 var(--color-text), inset 0 2px 0 0 rgba(255, 255, 255, 0.6);
+  transition: transform 0.05s ease, box-shadow 0.05s ease, background-color 0.15s ease;
+  font-family: 'Silkscreen', monospace;
+  image-rendering: pixelated;
+}
+
+.pixel-key:hover {
+  filter: brightness(1.05);
+}
+
+.pixel-key:active, .pixel-key.is-pressed {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 0 var(--color-text), inset 0 1px 0 0 rgba(255, 255, 255, 0.4);
+}
+
+.pixel-key.is-selected {
+  outline: 3px dashed var(--color-mauve);
+  outline-offset: 2px;
+  border-color: var(--color-mauve);
+}
+
+/* Pixel Range Sliders */
+input[type="range"].pixel-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 12px;
+  background: var(--color-crust);
+  border: 2px solid var(--color-text);
+  box-shadow: 2px 2px 0 0 var(--color-surface1);
+  outline: none;
+}
+
+input[type="range"].pixel-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 22px;
+  background: var(--color-mauve);
+  border: 2px solid var(--color-text);
+  box-shadow: 1px 1px 0 0 var(--color-text);
+  cursor: pointer;
+}
+
+input[type="range"].pixel-slider::-webkit-slider-thumb:hover {
+  background: var(--color-pink);
+}
+
+input[type="range"].pixel-slider::-moz-range-thumb {
+  width: 18px;
+  height: 22px;
+  background: var(--color-mauve);
+  border: 2px solid var(--color-text);
+  box-shadow: 1px 1px 0 0 var(--color-text);
+  cursor: pointer;
+}
+
+/* Pixel Checkbox */
+input[type="checkbox"].pixel-checkbox {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  background: var(--color-base);
+  border: 2px solid var(--color-text);
+  box-shadow: 2px 2px 0 0 var(--color-surface1);
+  cursor: pointer;
+  display: inline-grid;
+  place-content: center;
+}
+
+input[type="checkbox"].pixel-checkbox:checked {
+  background: var(--color-green);
+}
+
+input[type="checkbox"].pixel-checkbox:checked::before {
+  content: "✔";
+  color: white;
+  font-size: 11px;
+  font-weight: bold;
+}

@@ -1,0 +1,8 @@
+node_modules
+vendor
+.git
+.env
+.impeccable/mocks
+chunk_*
+k60_layout.json
+temp_laravel
