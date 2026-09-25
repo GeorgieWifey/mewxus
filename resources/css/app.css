@@ -1,6 +1,10 @@
 @import '@unocss/reset/tailwind.css';
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Silkscreen:wght@400;700&display=swap');
 
+[x-cloak] {
+  display: none !important;
+}
+
 :root {
   --color-rosewater: #dc8a78;
   --color-flamingo: #dd7878;
