@@ -7,7 +7,7 @@ COPY . .
 RUN npm run build
 
 # Stage 2: PHP Application
-FROM php:8.3-cli-alpine
+FROM php:8.4-cli-alpine
 WORKDIR /app
 
 # Install system dependencies & PHP extensions
@@ -22,7 +22,7 @@ COPY . .
 COPY --from=frontend /app/public/build ./public/build
 
 # Install production dependencies
-RUN composer install --no-dev --optimize-autoloader --no-interaction
+RUN composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-req=php+
 
 # Ensure database directory and permissions
 RUN mkdir -p /data database storage/framework/sessions storage/framework/views storage/framework/cache storage/logs \
