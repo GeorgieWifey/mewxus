@@ -1,0 +1,128 @@
+/* Mewxus — pastel pixel world on Catppuccin Latte. */
+@import '@fontsource/press-start-2p/400.css';
+@import '@fontsource/nunito/600.css';
+@import '@fontsource/nunito/700.css';
+@import '@fontsource/nunito/800.css';
+
+.htmx-swapping {
+    opacity: 0.3;
+}
+
+.pixelated {
+    image-rendering: pixelated;
+}
+
+.font-pixel {
+    letter-spacing: 0.02em;
+    line-height: 1.6;
+}
+
+::selection {
+    background: #ea76cb;
+    color: #eff1f5;
+}
+
+/* pixel range sliders */
+input[type='range'] {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 24px;
+    background: transparent;
+    cursor: pointer;
+}
+input[type='range']::-webkit-slider-runnable-track {
+    height: 12px;
+    background: #bcc0cc;
+    border: 3px solid #dce0e8;
+}
+input[type='range']::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    margin-top: -7px;
+    background: #dc8a78;
+    border: 3px solid #dce0e8;
+    box-shadow: 0 3px 0 0 #9ca0b0;
+}
+input[type='range']:active::-webkit-slider-thumb {
+    transform: translateY(3px);
+    box-shadow: none;
+}
+input[type='range']::-moz-range-track {
+    height: 12px;
+    background: #bcc0cc;
+    border: 3px solid #dce0e8;
+}
+input[type='range']::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 0;
+    background: #dc8a78;
+    border: 3px solid #dce0e8;
+    box-shadow: 0 3px 0 0 #9ca0b0;
+}
+
+/* checkbox + radio accent from the palette */
+input[type='checkbox'],
+input[type='radio'] {
+    accent-color: #ea76cb;
+}
+
+/* color input chrome */
+input[type='color'] {
+    border: 3px solid #dce0e8;
+    background: #e6e9ef;
+    padding: 0;
+}
+input[type='color']::-webkit-color-swatch-wrapper {
+    padding: 2px;
+}
+input[type='color']::-webkit-color-swatch {
+    border: none;
+}
+
+/* keyboard focus everywhere, in the palette */
+:focus-visible {
+    outline: 3px dashed #8839ef;
+    outline-offset: 2px;
+}
+
+/* mascot tail wag */
+@keyframes mewxus-wag {
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(-16deg); }
+}
+.mewxus-tail {
+    transform-origin: 13px 12px;
+    animation: mewxus-wag 1.8s ease-in-out infinite;
+}
+
+[x-cloak] {
+    display: none !important;
+}
+
+body {
+    margin: 0;
+}
+
+input,
+textarea,
+select {
+    caret-color: #4c4f69;
+}
+
+* {
+    scrollbar-width: thin;
+    scrollbar-color: #bcc0cc #eff1f5;
+}
+*::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+    background: #bcc0cc;
+    border: 2px solid #eff1f5;
+}
+*::-webkit-scrollbar-track {
+    background: #eff1f5;
+}
