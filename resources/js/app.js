@@ -3,7 +3,7 @@ import '../css/app.css';
 import Alpine from 'alpinejs';
 import htmx from 'htmx.org';
 
-import { LAYOUT_KEYS, LAYOUT_CODES, LIGHTING_EFFECTS, KEY_CATEGORIES } from './hid/layout.js';
+import { LAYOUT_KEYS, LIGHTING_EFFECTS, KEY_CATEGORIES } from './hid/layout.js';
 import { HidTransport } from './hid/transport.js';
 import { NexusProtocol, decodeKeyInfo, encodeKeyToTriple } from './hid/protocol.js';
 import { MockDevice } from './hid/mock-device.js';
@@ -39,11 +39,10 @@ Alpine.data('keyboardDriver', () => ({
 
   // Hardware layout & codes
   layoutKeys: LAYOUT_KEYS,
-  layoutCodes: LAYOUT_CODES,
   lightingEffects: LIGHTING_EFFECTS,
   keyCategories: KEY_CATEGORIES,
 
-  // Hardware EEPROM default slots cache
+  // Hardware default slots cache
   defaultSlots: [],
 
   // Keymaps per layer: 4 arrays of 66 keys
@@ -147,40 +146,48 @@ Alpine.data('keyboardDriver', () => ({
       index: idx,
       slotIndex: idx,
       type: k.code === 255 ? 240 : 16,
-      code1: k.code === 255 ? 255 : 0,
-      code2: k.code === 255 ? 0 : k.code,
+      code1: k.code === 255 ? 255 : (k.code >= 224 && k.code <= 231 ? (1 << (k.code - 224)) : 0),
+      code2: (k.code >= 224 && k.code <= 231) || k.code === 255 ? 0 : k.code,
       code: k.code,
       name: k.name,
     }));
   },
 
-  updateLayerKeysFromSlots(layer, userSlots) {
-    this.layers[layer] = LAYOUT_KEYS.map((k, a) => {
-      const codeDef = LAYOUT_CODES[a] || { type: 16, code1: 0, code2: k.code };
-      
+  updateLayerKeysFromHardware(layer, defaultSlots, userSlots) {
+    this.layers[layer] = LAYOUT_KEYS.map((k, idx) => {
       let slotIdx = -1;
-      if (this.defaultSlots && this.defaultSlots.length > 0) {
-        slotIdx = this.defaultSlots.findIndex(s => 
-          s.type === codeDef.type && s.code1 === codeDef.code1 && s.code2 === codeDef.code2
-        );
+      if (defaultSlots && defaultSlots.length > 0) {
+        slotIdx = defaultSlots.findIndex(s => s.code === k.code);
       }
-      if (slotIdx === -1) slotIdx = a;
+      if (slotIdx === -1) slotIdx = idx;
 
-      const activeSlot = (userSlots && userSlots[slotIdx] && userSlots[slotIdx].type !== 255)
+      const userSlot = (userSlots && userSlots[slotIdx] && userSlots[slotIdx].code !== -1 && userSlots[slotIdx].type !== 255)
         ? userSlots[slotIdx]
-        : { type: codeDef.type, code1: codeDef.code1, code2: codeDef.code2 };
+        : null;
 
-      const decoded = decodeKeyInfo(activeSlot.type, activeSlot.code1, activeSlot.code2);
+      if (userSlot) {
+        const decoded = decodeKeyInfo(userSlot.type, userSlot.code1, userSlot.code2);
+        return {
+          ...k,
+          index: idx,
+          slotIndex: slotIdx,
+          type: userSlot.type,
+          code1: userSlot.code1,
+          code2: userSlot.code2,
+          code: decoded.code || k.code,
+          name: decoded.name || this.resolveKeyName(decoded.code || k.code),
+        };
+      }
 
       return {
         ...k,
-        index: a,
+        index: idx,
         slotIndex: slotIdx,
-        type: activeSlot.type,
-        code1: activeSlot.code1,
-        code2: activeSlot.code2,
-        code: decoded.code || k.code,
-        name: decoded.name || this.resolveKeyName(decoded.code || k.code),
+        type: k.code === 255 ? 240 : 16,
+        code1: k.code === 255 ? 255 : 0,
+        code2: k.code === 255 ? 0 : k.code,
+        code: k.code,
+        name: k.name,
       };
     });
   },
@@ -235,7 +242,7 @@ Alpine.data('keyboardDriver', () => ({
 
         // Read active layer user matrix (subcommand 8)
         const userSlots = await this.protocol.readKeyMatrix(8, 0, this.activeLayer);
-        this.updateLayerKeysFromSlots(this.activeLayer, userSlots);
+        this.updateLayerKeysFromHardware(this.activeLayer, this.defaultSlots, userSlots);
 
       } catch (readErr) {
         console.warn('Initial read partial:', readErr);
@@ -266,10 +273,9 @@ Alpine.data('keyboardDriver', () => ({
     this.deviceInfo.name = 'Nexus 61S (Demo Mode)';
     this.deviceInfo.fwVersion = '1.18';
 
-    // Read mock slots
     this.defaultSlots = await this.protocol.readKeyMatrix(7, 0, 0);
     const userSlots = await this.protocol.readKeyMatrix(8, 0, this.activeLayer);
-    this.updateLayerKeysFromSlots(this.activeLayer, userSlots);
+    this.updateLayerKeysFromHardware(this.activeLayer, this.defaultSlots, userSlots);
 
     this.showToast('Demo Mode active. All features unlocked', 'success');
     this.setMascotMood('happy', 'Demo Mode active. Press physical keys to test.');
@@ -292,14 +298,24 @@ Alpine.data('keyboardDriver', () => ({
   },
 
   handleTravelEvent(data) {
-    const keyIndex = data[1];
-    const rawVal = data[2];
-    const depthMm = (rawVal / 255) * 4.0;
+    let pressedCode = decodeKeyInfo(data[1], data[2], data[3]).code;
+    let rawVal = data[10] !== undefined ? data[10] : data[2];
 
-    if (depthMm > 0.05) {
-      this.pressedKeys[keyIndex] = depthMm;
-    } else {
-      delete this.pressedKeys[keyIndex];
+    let keyIdx = -1;
+    if (pressedCode > 0) {
+      keyIdx = LAYOUT_KEYS.findIndex(k => k.code === pressedCode);
+    }
+    if (keyIdx === -1 && data[1] < LAYOUT_KEYS.length) {
+      keyIdx = data[1];
+    }
+
+    if (keyIdx !== -1) {
+      const depthMm = (rawVal / 255) * 4.0;
+      if (depthMm > 0.05) {
+        this.pressedKeys[keyIdx] = depthMm;
+      } else {
+        delete this.pressedKeys[keyIdx];
+      }
     }
   },
 
@@ -369,7 +385,7 @@ Alpine.data('keyboardDriver', () => ({
     if (this.isConnected) {
       try {
         const userSlots = await this.protocol.readKeyMatrix(8, 0, layer);
-        this.updateLayerKeysFromSlots(layer, userSlots);
+        this.updateLayerKeysFromHardware(layer, this.defaultSlots, userSlots);
       } catch (err) {
         console.warn('Could not read layer matrix:', err);
       }

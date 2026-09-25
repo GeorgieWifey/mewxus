@@ -3,7 +3,8 @@
  * Allows full interactive testing of all features without physical hardware.
  */
 
-import { LAYOUT_KEYS, LAYOUT_CODES, LIGHTING_EFFECTS } from './layout.js';
+import { LAYOUT_KEYS, LIGHTING_EFFECTS } from './layout.js';
+import { encodeKeyToTriple } from './protocol.js';
 
 export class MockDevice {
   constructor() {
@@ -22,10 +23,14 @@ export class MockDevice {
       disconnect: [],
     };
 
-    // Initialize 128 slots per layer matching LAYOUT_CODES
+    // Initialize 128 slots per layer directly from physical layout keys
     const defaultSlots = Array.from({ length: 128 }, (_, i) => {
-      const codeDef = LAYOUT_CODES[i] || { type: 16, code1: 0, code2: (LAYOUT_KEYS[i]?.code || 0) };
-      return { slot: i, type: codeDef.type, code1: codeDef.code1, code2: codeDef.code2 };
+      const k = LAYOUT_KEYS[i];
+      if (k) {
+        const trip = encodeKeyToTriple(k.code);
+        return { slot: i, type: trip.type, code1: trip.code1, code2: trip.code2, code: k.code, name: k.name };
+      }
+      return { slot: i, type: 255, code1: 0, code2: 0, code: -1, name: '' };
     });
 
     this.state = {
@@ -127,19 +132,22 @@ export class MockDevice {
   simulateKeyTravel(keyIndex, depthMm) {
     const packet = new Uint8Array(64);
     packet[0] = 0xA0; // 160
-    packet[1] = keyIndex;
-    packet[2] = Math.min(255, Math.round((depthMm / 4.0) * 255));
+    const k = LAYOUT_KEYS[keyIndex] || { code: 41 };
+    const trip = encodeKeyToTriple(k.code);
+    packet[1] = trip.type;
+    packet[2] = trip.code1;
+    packet[3] = trip.code2;
+    packet[6] = Math.min(255, Math.round((depthMm / 4.0) * 255));
+    packet[10] = packet[6];
     this.emit('travel', packet);
   }
 
   async sendCommand(cmd, args = []) {
     await new Promise(r => setTimeout(r, 10));
 
-    // Handle 0x55 (85)
     if (cmd === 85) {
       const sub = args[0];
 
-      // Subcommand 3: getInfo
       if (sub === 3) {
         const res = new Array(64).fill(0);
         res[8] = 0x18;
@@ -147,7 +155,6 @@ export class MockDevice {
         return res;
       }
 
-      // Subcommand 4: getBaseConfig
       if (sub === 4) {
         const res = new Array(64).fill(0);
         res[8] = this.state.baseConfig.reportRate === 1000 ? 232 : 100;
@@ -165,7 +172,6 @@ export class MockDevice {
         return res;
       }
 
-      // Subcommand 7 (read default matrix) & 8 (read user matrix)
       if (sub === 7 || sub === 8) {
         const len = args[3] || 56;
         const addr = (args[5] << 8) | args[4];
@@ -186,7 +192,6 @@ export class MockDevice {
         return res;
       }
 
-      // Subcommand 9: write user key to slot
       if (sub === 9) {
         const len = args[3];
         const addr = (args[5] << 8) | args[4];
@@ -202,7 +207,6 @@ export class MockDevice {
         return new Array(64).fill(0);
       }
 
-      // Subcommand 160: get Rapid Trigger
       if (sub === 160) {
         const res = new Array(64).fill(0);
         res[8] = Math.round(this.state.rapidTrigger.globalActuation * 10);
@@ -212,7 +216,6 @@ export class MockDevice {
         return res;
       }
 
-      // Subcommand 161: set Rapid Trigger
       if (sub === 161) {
         this.state.rapidTrigger.globalActuation = (args[1] || 15) / 10;
         this.state.rapidTrigger.globalPressSensitivity = (args[2] || 2) / 10;
@@ -221,13 +224,11 @@ export class MockDevice {
         return new Array(64).fill(0);
       }
 
-      // Reset
       if (sub === 238) {
         return new Array(64).fill(0);
       }
     }
 
-    // Factory reset
     if (cmd === 6 && args[0] === 15 && args[1] === 255) {
       this.state.userLayers = [
         JSON.parse(JSON.stringify(this.state.defaultMatrix)),

@@ -10,23 +10,24 @@ export function decodeKeyInfo(type, code1, code2) {
   if (type === 16) {
     if (code1 !== 0) {
       switch (code1) {
-        case 1: code = 224; break; // L-Ctrl
-        case 2: code = 225; break; // L-Shift
-        case 4: code = 226; break; // L-Alt
-        case 8: code = 227; break; // L-Win
-        case 16: code = 228; break; // R-Ctrl
-        case 32: code = 229; break; // R-Shift
-        case 64: code = 230; break; // R-Alt
-        case 128: code = 231; break; // R-Win
+        case 1: code = 224; name = 'CTRL'; break;
+        case 2: code = 225; name = 'SHIFT'; break;
+        case 4: code = 226; name = 'ALT'; break;
+        case 8: code = 227; name = 'WIN'; break;
+        case 16: code = 228; name = 'CTRL'; break;
+        case 32: code = 229; name = 'SHIFT'; break;
+        case 64: code = 230; name = 'ALT'; break;
+        case 128: code = 231; name = 'WIN'; break;
       }
     }
   } else if (type === 240 && code1 === 255) {
-    code = 255; // FN key
+    code = 255;
+    name = 'FN';
   } else if (type === 224) {
-    if (code1 === 1 && code2 === 0) code = 200;
-    else if (code1 === 2 && code2 === 0) code = 201;
-    else if (code1 === 3 && code2 === 0) code = 202;
-    else if (code1 === 4 && code2 === 0) code = 203;
+    if (code1 === 1 && code2 === 0) { code = 200; name = 'LIGHT1'; }
+    else if (code1 === 2 && code2 === 0) { code = 201; name = 'LIGHT2'; }
+    else if (code1 === 3 && code2 === 0) { code = 202; name = 'LIGHT3'; }
+    else if (code1 === 4 && code2 === 0) { code = 203; name = 'LIGHT4'; }
   } else if (type === 112) {
     name = `M${code1 + 1}`;
   } else if (type === 144) name = 'DKS';
@@ -43,7 +44,6 @@ export function encodeKeyToTriple(code, type = 16) {
   let code1 = 0;
   let code2 = code;
 
-  // Modifier keys encode as type 16 with modifier mask in code1
   if (code === 224) { type = 16; code1 = 1; code2 = 0; }
   else if (code === 225) { type = 16; code1 = 2; code2 = 0; }
   else if (code === 226) { type = 16; code1 = 4; code2 = 0; }
@@ -71,9 +71,6 @@ export class NexusProtocol {
     return (addrLow + addrHigh + len) & 0xFF;
   }
 
-  /**
-   * Read firmware information (subcommand 3)
-   */
   async getInfo() {
     const res = await this.transport.sendCommand(85, [3, 0, 32, 32]);
     const payload = res.slice(8);
@@ -85,9 +82,6 @@ export class NexusProtocol {
     };
   }
 
-  /**
-   * Read base keyboard config (subcommand 4)
-   */
   async getBaseConfig() {
     const res = await this.transport.sendCommand(85, [4, 0, 32, 32]);
     const p = res.slice(8);
@@ -105,9 +99,6 @@ export class NexusProtocol {
     };
   }
 
-  /**
-   * Write base config (subcommand 6)
-   */
   async setBaseConfig(cfg) {
     const p = new Array(32).fill(0);
     p[0] = cfg.reportRate || 1000;
@@ -130,8 +121,7 @@ export class NexusProtocol {
   }
 
   /**
-   * Read hardware matrix from EEPROM (subcommand 7 = default, subcommand 8 = user)
-   * Formula: baseAddr = 512 * layer + 2048 * profile
+   * Read raw matrix: subcommand 7 for default, 8 for user
    */
   async readKeyMatrix(subcmd = 8, profile = 0, layer = 0) {
     const baseAddr = 512 * layer + 2048 * profile;
@@ -153,17 +143,20 @@ export class NexusProtocol {
       const type = result[i * 3] !== undefined ? result[i * 3] : 255;
       const code1 = result[i * 3 + 1] || 0;
       const code2 = result[i * 3 + 2] || 0;
-      slots.push({ slot: i, type, code1, code2 });
+      const decoded = decodeKeyInfo(type, code1, code2);
+      slots.push({
+        slot: i,
+        type,
+        code1,
+        code2,
+        code: decoded.code,
+        name: decoded.name,
+      });
     }
 
     return slots;
   }
 
-  /**
-   * Write a single key to hardware slot
-   * Address: 512 * layer + 3 * slotIndex + 2048 * profile
-   * Subcommand: 9
-   */
   async setUserKey(profile = 0, layer = 0, slotIndex = 0, type = 16, code1 = 0, code2 = 0) {
     const addr = 512 * layer + 3 * slotIndex + 2048 * profile;
     const data = [type, code1, code2];
@@ -174,19 +167,6 @@ export class NexusProtocol {
     return await this.transport.sendCommand(85, [9, 0, checksum, len, aLow, aHigh, 0, ...data]);
   }
 
-  /**
-   * Write full layer keymap
-   */
-  async setKeymap(profile = 0, layer = 0, keyList = []) {
-    for (const k of keyList) {
-      const slot = k.slotIndex !== undefined ? k.slotIndex : k.index;
-      await this.setUserKey(profile, layer, slot, k.type || 16, k.code1 || 0, k.code2 || k.code || 0);
-    }
-  }
-
-  /**
-   * Read lighting configuration
-   */
   async getLighting() {
     const [aLow, aHigh] = [0, 0];
     const len = 32;
@@ -206,9 +186,6 @@ export class NexusProtocol {
     };
   }
 
-  /**
-   * Write lighting configuration
-   */
   async setLighting(config) {
     const p = new Array(32).fill(0);
     p[0] = config.effect !== undefined ? config.effect : 1;
@@ -227,9 +204,6 @@ export class NexusProtocol {
     return await this.transport.sendCommand(85, [6, 0, checksum, len, aLow, aHigh, ...p]);
   }
 
-  /**
-   * Rapid Trigger & Magnetic Switch Actuation
-   */
   async getRapidTrigger() {
     const res = await this.transport.sendCommand(85, [160, 0, 32, 32]);
     const p = res.slice(8);
