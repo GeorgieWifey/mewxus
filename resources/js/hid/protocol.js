@@ -120,9 +120,6 @@ export class NexusProtocol {
     return await this.transport.sendCommand(85, [6, 0, checksum, len, aLow, aHigh, ...p]);
   }
 
-  /**
-   * Read raw matrix: subcommand 7 for default, 8 for user
-   */
   async readKeyMatrix(subcmd = 8, profile = 0, layer = 0) {
     const baseAddr = 512 * layer + 2048 * profile;
     const result = [];
@@ -165,6 +162,62 @@ export class NexusProtocol {
     const checksum = (len + aLow + aHigh + 0 + data[0] + data[1] + data[2]) & 0xFF;
 
     return await this.transport.sendCommand(85, [9, 0, checksum, len, aLow, aHigh, 0, ...data]);
+  }
+
+  async setKeyTrigger(keyItem, profile = 0, slot = 0) {
+    const d = new Array(8).fill(0);
+    d[0] = 160 | (keyItem.switch_type || 0);
+    d[1] = keyItem.priority ? (keyItem.priority << 4 | (keyItem.key_mode || 0)) : (keyItem.key_mode || 0);
+    const act = Math.round((keyItem.key_actuation || 1.5) * 10);
+    const [actL, actH] = this.splitAddr(Math.max(0, act - 1));
+    d[2] = actL;
+    d[3] = (1 & actH) | 20;
+    const press = Math.round((keyItem.rt_press || 0.2) * 10);
+    const [prL, prH] = this.splitAddr(press);
+    d[4] = prL;
+    d[5] = prH << 1;
+    const rel = Math.round((keyItem.rt_release || 0.2) * 10);
+    const [relL, relH] = this.splitAddr(rel);
+    d[6] = relL;
+    d[7] = relH << 1;
+
+    const addr = 1024 * profile + 8 * slot;
+    const [aLow, aHigh] = this.splitAddr(addr);
+    const len = 8;
+    const checksum = (len + aLow + aHigh + 0 + d.reduce((a, b) => a + b, 0)) & 0xFF;
+    return await this.transport.sendCommand(85, [161, 0, checksum, len, aLow, aHigh, 0, ...d]);
+  }
+
+  async setAllKeyTravel(travelKeyList, profile = 0) {
+    const rawBytes = [];
+    for (const keyItem of travelKeyList) {
+      const d = new Array(8).fill(0);
+      d[0] = 160 | (keyItem.switch_type || 0);
+      d[1] = keyItem.priority ? (keyItem.priority << 4 | (keyItem.key_mode || 0)) : (keyItem.key_mode || 0);
+      const act = Math.round((keyItem.key_actuation || 1.5) * 10);
+      const [actL, actH] = this.splitAddr(Math.max(0, act - 1));
+      d[2] = actL;
+      d[3] = (1 & actH) | 20;
+      const press = Math.round((keyItem.rt_press || 0.2) * 10);
+      const [prL, prH] = this.splitAddr(press);
+      d[4] = prL;
+      d[5] = prH << 1;
+      const rel = Math.round((keyItem.rt_release || 0.2) * 10);
+      const [relL, relH] = this.splitAddr(rel);
+      d[6] = relL;
+      d[7] = relH << 1;
+      rawBytes.push(...d);
+    }
+
+    const baseAddr = 1024 * profile;
+    for (let offset = 0; offset < rawBytes.length; offset += 56) {
+      const chunk = rawBytes.slice(offset, offset + 56);
+      const len = chunk.length;
+      const addr = baseAddr + offset;
+      const [aLow, aHigh] = this.splitAddr(addr);
+      const checksum = (len + aLow + aHigh + 0 + chunk.reduce((a, b) => a + b, 0)) & 0xFF;
+      await this.transport.sendCommand(85, [161, 0, checksum, len, aLow, aHigh, 0, ...chunk]);
+    }
   }
 
   async getLighting() {

@@ -3,7 +3,7 @@ import '../css/app.css';
 import Alpine from 'alpinejs';
 import htmx from 'htmx.org';
 
-import { LAYOUT_KEYS, LIGHTING_EFFECTS, KEY_CATEGORIES } from './hid/layout.js';
+import { LAYOUT_KEYS, SWITCH_TYPES, LIGHTING_EFFECTS, KEY_CATEGORIES } from './hid/layout.js';
 import { HidTransport } from './hid/transport.js';
 import { NexusProtocol, decodeKeyInfo, encodeKeyToTriple } from './hid/protocol.js';
 import { MockDevice } from './hid/mock-device.js';
@@ -25,7 +25,7 @@ Alpine.data('keyboardDriver', () => ({
   },
 
   // UI state
-  activeTab: 'keymap',
+  activeTab: 'keymap', // 'keymap', 'lighting', 'rapid_trigger', 'visualizer', 'macros', 'presets', 'settings', 'firmware'
   activeLayer: 0,
   selectedKeyIndex: null,
   selectedCategory: 'basic',
@@ -37,12 +37,19 @@ Alpine.data('keyboardDriver', () => ({
   mascotSpeech: 'Connect your Nexus 61S or try Demo Mode',
   mascotTimer: null,
 
-  // Hardware layout & codes
+  // Hardware layout & switches
   layoutKeys: LAYOUT_KEYS,
+  switchTypes: SWITCH_TYPES,
   lightingEffects: LIGHTING_EFFECTS,
   keyCategories: KEY_CATEGORIES,
 
-  // Hardware default slots cache
+  // Selected switch type for switch selector (default: Magnetic Jade Pro = 1)
+  selectedSwitchType: 1,
+
+  // Per-key switch types: index -> switch_type (0..14)
+  keySwitchMap: {},
+
+  // Default slots from hardware
   defaultSlots: [],
 
   // Keymaps per layer: 4 arrays of 66 keys
@@ -50,8 +57,14 @@ Alpine.data('keyboardDriver', () => ({
     [], [], [], []
   ],
 
-  // Pressed keys tracking (for 0xA0 live travel events)
+  // Pressed keys tracking (for 0xA0 live travel events): keyIndex -> depthMm
   pressedKeys: {},
+  lastPressedKey: null,
+  currentTravelMm: 0.0,
+  peakTravelMm: 0.0,
+
+  // Travel history for real-time waveform visualizer (array of last 20 depth values)
+  travelWaveform: Array(20).fill(0),
 
   // Lighting state
   lighting: {
@@ -70,6 +83,8 @@ Alpine.data('keyboardDriver', () => ({
     globalPressSensitivity: 0.2,
     globalReleaseSensitivity: 0.2,
     continuousRapidTrigger: true,
+    pressDeadzone: 0.2,
+    releaseDeadzone: 0.2,
   },
   perKeyActuation: {},
 
@@ -107,7 +122,12 @@ Alpine.data('keyboardDriver', () => ({
     this.transport = new HidTransport();
     this.protocol = new NexusProtocol(this.transport);
 
-    // Initialize initial layers with default matching
+    // Initialize keySwitchMap with default switch (Magnetic Jade Pro = 1)
+    LAYOUT_KEYS.forEach((_, idx) => {
+      this.keySwitchMap[idx] = 1;
+    });
+
+    // Initialize initial layers
     for (let l = 0; l < 4; l++) {
       this.layers[l] = this.buildInitialLayer(l);
     }
@@ -237,10 +257,7 @@ Alpine.data('keyboardDriver', () => ({
         const rt = await this.protocol.getRapidTrigger();
         this.rapidTrigger = { ...this.rapidTrigger, ...rt };
 
-        // Read default matrix (subcommand 7) to match physical keys to EEPROM slots
         this.defaultSlots = await this.protocol.readKeyMatrix(7, 0, 0);
-
-        // Read active layer user matrix (subcommand 8)
         const userSlots = await this.protocol.readKeyMatrix(8, 0, this.activeLayer);
         this.updateLayerKeysFromHardware(this.activeLayer, this.defaultSlots, userSlots);
 
@@ -299,7 +316,7 @@ Alpine.data('keyboardDriver', () => ({
 
   handleTravelEvent(data) {
     let pressedCode = decodeKeyInfo(data[1], data[2], data[3]).code;
-    let rawVal = data[10] !== undefined ? data[10] : data[2];
+    let rawVal = data[10] !== undefined ? data[10] : (data[6] !== undefined ? data[6] : data[2]);
 
     let keyIdx = -1;
     if (pressedCode > 0) {
@@ -310,12 +327,25 @@ Alpine.data('keyboardDriver', () => ({
     }
 
     if (keyIdx !== -1) {
-      const depthMm = (rawVal / 255) * 4.0;
+      const switchSpec = this.switchTypes[this.keySwitchMap[keyIdx] || 0] || { keyTravel: 3.4 };
+      const maxTravel = switchSpec.keyTravel;
+      const depthMm = (rawVal / 255) * maxTravel;
+
       if (depthMm > 0.05) {
         this.pressedKeys[keyIdx] = depthMm;
+        this.lastPressedKey = keyIdx;
+        this.currentTravelMm = depthMm;
+        if (depthMm > this.peakTravelMm) this.peakTravelMm = depthMm;
       } else {
         delete this.pressedKeys[keyIdx];
+        if (this.lastPressedKey === keyIdx) {
+          this.currentTravelMm = 0.0;
+        }
       }
+
+      // Push to waveform
+      this.travelWaveform.shift();
+      this.travelWaveform.push(this.currentTravelMm);
     }
   },
 
@@ -325,6 +355,65 @@ Alpine.data('keyboardDriver', () => ({
       if (match) return match.name;
     }
     return `K${code}`;
+  },
+
+  // Switch Selector methods
+  get currentMaxTravel() {
+    const sw = this.switchTypes[this.selectedSwitchType] || { keyTravel: 3.4 };
+    return sw.keyTravel;
+  },
+
+  getSwitchColor(keyIdx) {
+    const swIdx = this.keySwitchMap[keyIdx] || 0;
+    return this.switchTypes[swIdx]?.color || '#6a9955';
+  },
+
+  async applySwitchToSelectedKey(swVal) {
+    if (this.selectedKeyIndex === null) {
+      this.showToast('Click a key on the board first', 'info');
+      return;
+    }
+
+    this.keySwitchMap[this.selectedKeyIndex] = swVal;
+    const sw = this.switchTypes[swVal];
+    this.showToast(`Installed ${sw.name} on Key #${this.selectedKeyIndex}`, 'success');
+
+    if (this.isConnected) {
+      const k = this.layers[this.activeLayer][this.selectedKeyIndex];
+      const slot = k.slotIndex !== undefined ? k.slotIndex : this.selectedKeyIndex;
+      await this.protocol.setKeyTrigger({
+        switch_type: swVal,
+        key_mode: 1,
+        key_actuation: Math.min(sw.keyTravel, this.rapidTrigger.globalActuation),
+        rt_press: this.rapidTrigger.globalPressSensitivity,
+        rt_release: this.rapidTrigger.globalReleaseSensitivity,
+      }, 0, slot);
+    }
+  },
+
+  async applySwitchToAllKeys(swVal) {
+    this.selectedSwitchType = swVal;
+    LAYOUT_KEYS.forEach((_, idx) => {
+      this.keySwitchMap[idx] = swVal;
+    });
+
+    const sw = this.switchTypes[swVal];
+    if (this.rapidTrigger.globalActuation > sw.keyTravel) {
+      this.rapidTrigger.globalActuation = Math.max(0.1, sw.keyTravel - 0.2);
+    }
+
+    this.showToast(`Applied ${sw.name} (${sw.keyTravel}mm) to all 61 keys`, 'success');
+
+    if (this.isConnected) {
+      const travelList = LAYOUT_KEYS.map((k, idx) => ({
+        switch_type: swVal,
+        key_mode: 1,
+        key_actuation: Math.min(sw.keyTravel, this.rapidTrigger.globalActuation),
+        rt_press: this.rapidTrigger.globalPressSensitivity,
+        rt_release: this.rapidTrigger.globalReleaseSensitivity,
+      }));
+      await this.protocol.setAllKeyTravel(travelList, 0);
+    }
   },
 
   selectKey(index) {

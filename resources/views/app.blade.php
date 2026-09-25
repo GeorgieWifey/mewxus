@@ -186,7 +186,7 @@
                     <!-- Single Pixel Keycap -->
                     <button type="button"
                             @click="selectKey(idx)"
-                            class="pixel-key flex flex-col justify-between p-1.5 text-center transition-all cursor-pointer relative"
+                            class="pixel-key flex flex-col justify-between p-1.5 text-center transition-all cursor-pointer relative overflow-hidden"
                             :class="{
                               'is-selected': selectedKeyIndex === idx,
                               'is-pressed': pressedKeys[idx] !== undefined,
@@ -200,15 +200,28 @@
                               minWidth: (k.w * 44) + 'px',
                               backgroundColor: (activeTab === 'lighting' && lighting.effect === 0 && lighting.customColors[idx]) ? lighting.customColors[idx] : null
                             }">
+
+                      <!-- Live Actuation Fill Meter (Behind Text) -->
+                      <template x-if="pressedKeys[idx] !== undefined">
+                        <div class="absolute bottom-0 left-0 right-0 bg-latte-mauve/25 pointer-events-none transition-all duration-75"
+                             :style="{ height: ((pressedKeys[idx] / (switchTypes[keySwitchMap[idx] || 0]?.keyTravel || 3.4)) * 100) + '%' }">
+                        </div>
+                      </template>
+
                       <!-- Keycap top label -->
-                      <div class="flex justify-between items-start w-full">
+                      <div class="flex justify-between items-start w-full relative z-10">
                         <span class="font-pixel text-[10px] font-bold leading-tight truncate"
                               x-text="layers[activeLayer][idx]?.name || k.name"></span>
-                        <span class="text-[8px] opacity-40 font-mono" x-text="layers[activeLayer][idx]?.slotIndex ?? idx"></span>
+                        <span class="text-[8px] opacity-40 font-mono" x-text="idx"></span>
                       </div>
 
-                      <!-- Keycap bottom info (Live Travel Depth mm if pressed) -->
-                      <div class="flex justify-between items-end w-full text-[8px]">
+                      <!-- Keycap bottom info & installed switch marker -->
+                      <div class="flex justify-between items-end w-full text-[8px] relative z-10">
+                        <!-- Switch model triangle marker -->
+                        <span class="inline-block w-2 h-2 border border-latte-text"
+                              :style="{ backgroundColor: getSwitchColor(idx) }"
+                              :title="switchTypes[keySwitchMap[idx] || 0]?.name || 'Switch'"></span>
+
                         <template x-if="pressedKeys[idx] !== undefined">
                           <span class="font-pixel text-white font-bold bg-latte-red px-1"
                                 x-text="(pressedKeys[idx]).toFixed(1) + 'mm'"></span>
@@ -232,12 +245,17 @@
         <div class="flex items-center gap-2">
           <span class="font-pixel text-[10px] text-latte-subtext0">SELECTED KEY:</span>
           <template x-if="selectedKeyIndex !== null">
-            <span class="font-pixel text-xs text-latte-mauve font-bold"
-                  x-text="'[' + (layers[activeLayer][selectedKeyIndex]?.name || layoutKeys[selectedKeyIndex]?.name) + '] (Slot #' + (layers[activeLayer][selectedKeyIndex]?.slotIndex ?? selectedKeyIndex) + ')'">
-            </span>
+            <div class="flex items-center gap-1.5">
+              <span class="font-pixel text-xs text-latte-mauve font-bold"
+                    x-text="'[' + (layers[activeLayer][selectedKeyIndex]?.name || layoutKeys[selectedKeyIndex]?.name) + '] (Slot #' + (layers[activeLayer][selectedKeyIndex]?.slotIndex ?? selectedKeyIndex) + ')'">
+              </span>
+              <span class="font-pixel text-[9px] px-1 py-0.5 border border-latte-text"
+                    :style="{ backgroundColor: getSwitchColor(selectedKeyIndex) }"
+                    x-text="switchTypes[keySwitchMap[selectedKeyIndex] || 0]?.name"></span>
+            </div>
           </template>
           <template x-if="selectedKeyIndex === null">
-            <span class="text-latte-subtext1 text-[10px]">Click any key above to inspect or remap</span>
+            <span class="text-latte-subtext1 text-[10px]">Click any key above to inspect, remap, or change switch</span>
           </template>
         </div>
 
@@ -282,6 +300,24 @@
           <span>RAPID TRIGGER</span>
         </button>
 
+        <!-- Dedicated Switch Selector Tab -->
+        <button type="button"
+                @click="activeTab = 'switches'"
+                class="pixel-btn text-[10px] flex items-center gap-1.5"
+                :class="activeTab === 'switches' ? 'pixel-btn-primary' : 'pixel-btn-secondary'">
+          <x-pixel-icon name="target" class="w-3.5 h-3.5" />
+          <span>SWITCH SELECTOR</span>
+        </button>
+
+        <!-- Dedicated Keypress Visualizer Tab -->
+        <button type="button"
+                @click="activeTab = 'visualizer'"
+                class="pixel-btn text-[10px] flex items-center gap-1.5"
+                :class="activeTab === 'visualizer' ? 'pixel-btn-primary' : 'pixel-btn-secondary'">
+          <x-pixel-icon name="sliders" class="w-3.5 h-3.5" />
+          <span>TRAVEL VISUALIZER</span>
+        </button>
+
         <button type="button"
                 @click="activeTab = 'macros'"
                 class="pixel-btn text-[10px] flex items-center gap-1.5"
@@ -318,7 +354,6 @@
       <!-- Panel 1: Keymap Remapping Drawer -->
       <div x-show="activeTab === 'keymap'" class="flex flex-col gap-4">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
-          <!-- Category Pills -->
           <div class="flex flex-wrap gap-1">
             <template x-for="(catKeys, catName) in keyCategories" :key="catName">
               <button type="button"
@@ -330,7 +365,6 @@
             </template>
           </div>
 
-          <!-- Search Filter -->
           <div class="relative w-full md:w-64">
             <input type="text"
                    x-model="searchQuery"
@@ -339,7 +373,6 @@
           </div>
         </div>
 
-        <!-- Key Picker Grid -->
         <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2 p-3 bg-latte-mantle border-2 border-latte-surface1 max-h-72 overflow-y-auto">
           <template x-for="kc in filteredKeycodes" :key="kc.code">
             <button type="button"
@@ -355,8 +388,6 @@
       <!-- Panel 2: 23 RGB Lighting Modes -->
       <div x-show="activeTab === 'lighting'" class="flex flex-col gap-5">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          
-          <!-- Mode Selector -->
           <div class="pixel-box bg-latte-mantle p-4 flex flex-col gap-2">
             <h3 class="font-pixel text-xs text-latte-mauve font-bold mb-1">SELECT EFFECT (23 MODES)</h3>
             <div class="max-h-64 overflow-y-auto flex flex-col gap-1 pr-1">
@@ -372,11 +403,9 @@
             </div>
           </div>
 
-          <!-- Parameters: Brightness, Speed, Direction -->
           <div class="pixel-box bg-latte-mantle p-4 flex flex-col gap-4">
             <h3 class="font-pixel text-xs text-latte-mauve font-bold">LIGHTING PARAMETERS</h3>
 
-            <!-- Brightness -->
             <div class="flex flex-col gap-1">
               <div class="flex justify-between text-[10px] font-pixel">
                 <span>BRIGHTNESS</span>
@@ -390,7 +419,6 @@
                      class="pixel-slider">
             </div>
 
-            <!-- Speed -->
             <div class="flex flex-col gap-1">
               <div class="flex justify-between text-[10px] font-pixel">
                 <span>SPEED</span>
@@ -404,7 +432,6 @@
                      class="pixel-slider">
             </div>
 
-            <!-- Direction -->
             <div class="flex flex-col gap-1">
               <span class="text-[10px] font-pixel">DIRECTION</span>
               <div class="grid grid-cols-2 gap-2 mt-1">
@@ -424,7 +451,6 @@
             </div>
           </div>
 
-          <!-- Color Palette Chips -->
           <div class="pixel-box bg-latte-mantle p-4 flex flex-col gap-3">
             <h3 class="font-pixel text-xs text-latte-mauve font-bold">CATPPUCCIN PALETTE</h3>
             
@@ -451,11 +477,9 @@
       <div x-show="activeTab === 'rapid_trigger'" class="flex flex-col gap-5">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
           
-          <!-- Global Actuation Sliders -->
           <div class="pixel-box bg-latte-mantle p-4 flex flex-col gap-4">
             <h3 class="font-pixel text-xs text-latte-mauve font-bold">MAGNETIC SWITCH ACTUATION</h3>
             
-            <!-- Global Initial Travel -->
             <div class="flex flex-col gap-1">
               <div class="flex justify-between text-[10px] font-pixel">
                 <span>INITIAL ACTUATION DEPTH</span>
@@ -463,15 +487,14 @@
               </div>
               <input type="range"
                      min="0.1"
-                     max="4.0"
+                     :max="currentMaxTravel"
                      step="0.1"
                      x-model.number="rapidTrigger.globalActuation"
                      @change="updateRapidTrigger()"
                      class="pixel-slider">
-              <p class="text-[9px] text-latte-subtext1">Travel distance before key registers down (0.1mm - 4.0mm).</p>
+              <p class="text-[9px] text-latte-subtext1" x-text="'Travel distance before key registers down (0.1mm - ' + currentMaxTravel + 'mm).'"></p>
             </div>
 
-            <!-- RT Press Sensitivity -->
             <div class="flex flex-col gap-1">
               <div class="flex justify-between text-[10px] font-pixel">
                 <span>RAPID TRIGGER PRESS SENSITIVITY</span>
@@ -486,7 +509,6 @@
                      class="pixel-slider">
             </div>
 
-            <!-- RT Release Sensitivity -->
             <div class="flex flex-col gap-1">
               <div class="flex justify-between text-[10px] font-pixel">
                 <span>RAPID TRIGGER RELEASE SENSITIVITY</span>
@@ -501,7 +523,6 @@
                      class="pixel-slider">
             </div>
 
-            <!-- Continuous RT Toggle -->
             <label class="flex items-center gap-2 cursor-pointer font-pixel text-[10px] mt-1">
               <input type="checkbox"
                      x-model="rapidTrigger.continuousRapidTrigger"
@@ -511,7 +532,6 @@
             </label>
           </div>
 
-          <!-- Live Hall Effect Travel Visualizer Gauge -->
           <div class="pixel-box bg-latte-mantle p-4 flex flex-col justify-between gap-4">
             <div>
               <h3 class="font-pixel text-xs text-latte-mauve font-bold mb-2">LIVE MAGNETIC TRAVEL GAUGE</h3>
@@ -519,18 +539,16 @@
                 Press any key on your keyboard to observe the real-time magnetic Hall sensor depth streamed via packet <code class="bg-latte-base px-1 border border-latte-surface1">0xA0</code>.
               </p>
               
-              <!-- Depth Bars for Active Keys -->
               <div class="flex flex-col gap-2 max-h-48 overflow-y-auto">
                 <template x-for="(depth, kIdx) in pressedKeys" :key="kIdx">
                   <div class="p-2 bg-latte-base border border-latte-text flex flex-col gap-1">
                     <div class="flex justify-between text-[10px] font-pixel">
                       <span x-text="'Key #' + kIdx + ' [' + (layers[activeLayer][kIdx]?.name || 'Key') + ']'"></span>
-                      <span class="text-latte-mauve font-bold" x-text="depth.toFixed(2) + ' mm / 4.0 mm'"></span>
+                      <span class="text-latte-mauve font-bold" x-text="depth.toFixed(2) + ' mm / ' + (switchTypes[keySwitchMap[kIdx] || 0]?.keyTravel || 3.4) + ' mm'"></span>
                     </div>
-                    <!-- Visual depth meter -->
                     <div class="w-full bg-latte-crust h-3 border border-latte-text overflow-hidden">
                       <div class="h-full bg-latte-pink transition-all duration-75"
-                           :style="{ width: ((depth / 4.0) * 100) + '%' }"></div>
+                           :style="{ width: ((depth / (switchTypes[keySwitchMap[kIdx] || 0]?.keyTravel || 3.4)) * 100) + '%' }"></div>
                     </div>
                   </div>
                 </template>
@@ -558,10 +576,171 @@
         </div>
       </div>
 
-      <!-- Panel 4: 16-Slot Macro Editor -->
+      <!-- Panel 4: Dedicated Switch Selector (15 Official Switches) -->
+      <div x-show="activeTab === 'switches'" class="flex flex-col gap-5">
+        <div class="pixel-box bg-latte-mantle p-4 flex flex-col gap-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-latte-surface1 pb-3">
+            <div>
+              <h3 class="font-pixel text-xs text-latte-mauve font-bold">MAGNETIC SWITCH MODEL SELECTOR (15 OFFICIAL PROFILES)</h3>
+              <p class="text-[10px] text-latte-subtext0">
+                Nexus 61S supports magnetic Hall sensors calibrated to 15 official switch models with tailored travel depths.
+              </p>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button type="button"
+                      @click="applySwitchToSelectedKey(selectedSwitchType)"
+                      :disabled="selectedKeyIndex === null"
+                      class="pixel-btn-accent text-[10px] flex items-center gap-1">
+                <x-pixel-icon name="target" class="w-3 h-3" />
+                <span>APPLY TO SELECTED KEY</span>
+              </button>
+              <button type="button"
+                      @click="applySwitchToAllKeys(selectedSwitchType)"
+                      class="pixel-btn-primary text-[10px] flex items-center gap-1">
+                <x-pixel-icon name="check" class="w-3 h-3" />
+                <span>APPLY TO ALL 61 KEYS</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Switch Models Grid -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+            <template x-for="sw in switchTypes" :key="sw.value">
+              <button type="button"
+                      @click="selectedSwitchType = sw.value"
+                      class="pixel-box p-3 text-left transition-all cursor-pointer flex flex-col justify-between"
+                      :class="selectedSwitchType === sw.value ? 'bg-latte-mauve text-latte-base border-latte-text' : 'bg-latte-base text-latte-text hover:border-latte-mauve'">
+                <div class="flex items-start justify-between gap-2 mb-2">
+                  <span class="font-pixel text-[10px] font-bold truncate" x-text="sw.name"></span>
+                  <span class="inline-block w-3 h-3 border border-latte-text flex-shrink-0"
+                        :style="{ backgroundColor: sw.color }"></span>
+                </div>
+                <div class="flex items-center justify-between text-[9px] pt-2 border-t border-latte-surface0">
+                  <span class="opacity-70" x-text="'TRAVEL: ' + sw.keyTravel + 'mm'"></span>
+                  <span class="font-mono text-[8px] px-1 bg-latte-mantle border border-latte-text"
+                        x-text="'ID ' + sw.value"></span>
+                </div>
+              </button>
+            </template>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel 5: Dedicated Keypress Visualizer (Mechanical Cutaway & Waveform) -->
+      <div x-show="activeTab === 'visualizer'" class="flex flex-col gap-5">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          
+          <!-- Mechanical Switch Animated Cutaway -->
+          <div class="pixel-box bg-latte-mantle p-4 flex flex-col items-center justify-between gap-4">
+            <div class="w-full">
+              <h3 class="font-pixel text-xs text-latte-mauve font-bold mb-1">HALL EFFECT MECHANICAL CUTAWAY</h3>
+              <p class="text-[10px] text-latte-subtext0 mb-4">Live physical switch stem depression via WebHID <code class="bg-latte-base px-1 border border-latte-surface1">0xA0</code>.</p>
+            </div>
+
+            <!-- SVG Switch Cutaway Visualizer -->
+            <div class="w-56 h-64 bg-latte-base border-3 border-latte-text shadow-[3px_3px_0_0_#4c4f69] p-3 flex flex-col justify-between relative overflow-hidden">
+              
+              <!-- Housing Top -->
+              <div class="w-full flex justify-between items-center text-[8px] font-pixel text-latte-subtext1 border-b border-latte-surface1 pb-1">
+                <span>TOP HOUSING</span>
+                <span x-text="currentTravelMm > rapidTrigger.globalActuation ? 'ACTIVE' : 'IDLE'"
+                      :class="currentTravelMm > rapidTrigger.globalActuation ? 'text-latte-green font-bold' : 'text-latte-subtext0'"></span>
+              </div>
+
+              <!-- Animated Stem & Magnet Chamber -->
+              <div class="relative w-full flex-grow flex items-center justify-center my-2">
+                <!-- Actuation Threshold Reference Line -->
+                <div class="absolute left-0 right-0 border-t-2 border-dashed border-latte-red z-10"
+                     :style="{ top: ((rapidTrigger.globalActuation / currentMaxTravel) * 100) + '%' }">
+                  <span class="absolute right-1 -top-3 text-[7px] font-pixel text-latte-red font-bold"
+                        x-text="'ACT: ' + rapidTrigger.globalActuation + 'mm'"></span>
+                </div>
+
+                <!-- Moving Switch Stem -->
+                <div class="w-24 bg-latte-mauve border-2 border-latte-text transition-transform duration-75 relative"
+                     :style="{
+                       height: '70px',
+                       transform: 'translateY(' + ((currentTravelMm / currentMaxTravel) * 60) + 'px)'
+                     }">
+                  <!-- Cross Mount -->
+                  <div class="absolute -top-3 left-1/2 -translate-x-1/2 w-6 h-3 bg-latte-pink border border-latte-text"></div>
+                  <!-- Magnet in stem base -->
+                  <div class="absolute bottom-1 left-1/2 -translate-x-1/2 w-12 h-3 bg-latte-peach border border-latte-text flex items-center justify-center text-[7px] text-white font-bold">
+                    MAGNET
+                  </div>
+                </div>
+
+                <!-- Return Spring Coil Representation -->
+                <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-8 border-b-2 border-dashed border-latte-overlay1 z-0"></div>
+              </div>
+
+              <!-- Bottom Sensor Base -->
+              <div class="w-full bg-latte-surface0 p-1.5 border border-latte-text flex justify-between items-center text-[9px] font-pixel">
+                <span class="text-latte-teal font-bold">HALL SENSOR</span>
+                <span class="text-latte-mauve font-bold" x-text="currentTravelMm.toFixed(2) + ' mm'"></span>
+              </div>
+            </div>
+
+            <!-- Digital Readout Gauge -->
+            <div class="w-full grid grid-cols-2 gap-2 text-center text-[9px] font-pixel">
+              <div class="p-2 bg-latte-base border border-latte-text">
+                <span class="text-latte-subtext0 block">CURRENT DEPTH</span>
+                <span class="text-latte-mauve font-bold text-xs" x-text="currentTravelMm.toFixed(2) + ' mm'"></span>
+              </div>
+              <div class="p-2 bg-latte-base border border-latte-text">
+                <span class="text-latte-subtext0 block">PEAK TRAVEL</span>
+                <span class="text-latte-teal font-bold text-xs" x-text="peakTravelMm.toFixed(2) + ' mm'"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Live Travel Waveform Chart -->
+          <div class="lg:col-span-2 pixel-box bg-latte-mantle p-4 flex flex-col justify-between gap-4">
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <h3 class="font-pixel text-xs text-latte-mauve font-bold">REAL-TIME TRAVEL WAVEFORM (LAST 20 READINGS)</h3>
+                <span class="font-pixel text-[9px] text-latte-teal" x-text="'MAX TRAVEL: ' + currentMaxTravel + 'mm'"></span>
+              </div>
+              <p class="text-[10px] text-latte-subtext0 mb-4">Visualizes continuous Hall sensor readings while pressing switches.</p>
+
+              <!-- Waveform Bar Chart -->
+              <div class="h-44 bg-latte-base border-2 border-latte-text p-2 flex items-end justify-between gap-1 relative overflow-hidden">
+                <!-- Actuation Threshold Horizontal Line -->
+                <div class="absolute left-0 right-0 border-t border-dashed border-latte-red pointer-events-none"
+                     :style="{ bottom: ((rapidTrigger.globalActuation / currentMaxTravel) * 100) + '%' }"></div>
+
+                <template x-for="(wVal, wIdx) in travelWaveform" :key="wIdx">
+                  <div class="flex-grow bg-latte-mauve border border-latte-text transition-all duration-75"
+                       :style="{
+                         height: Math.max(4, (wVal / currentMaxTravel) * 100) + '%',
+                         backgroundColor: wVal > rapidTrigger.globalActuation ? '#8839ef' : '#bcc0cc'
+                       }"></div>
+                </template>
+              </div>
+            </div>
+
+            <!-- Heat matrix summary -->
+            <div class="p-3 bg-latte-base border border-latte-text text-[10px] flex flex-col gap-2">
+              <span class="font-pixel font-bold text-latte-text">ACTIVE ACTUATIONS:</span>
+              <div class="flex flex-wrap gap-2">
+                <template x-for="(dVal, kKey) in pressedKeys" :key="kKey">
+                  <span class="px-2 py-0.5 bg-latte-pink text-white font-pixel text-[9px] border border-latte-text"
+                        x-text="'Key #' + kKey + ': ' + dVal.toFixed(2) + 'mm'"></span>
+                </template>
+                <template x-if="Object.keys(pressedKeys).length === 0">
+                  <span class="text-latte-subtext1 italic">Press any physical switch to see live data</span>
+                </template>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Panel 6: 16-Slot Macro Editor -->
       <div x-show="activeTab === 'macros'" class="flex flex-col gap-4">
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <!-- Slots List -->
           <div class="pixel-box bg-latte-mantle p-3 flex flex-col gap-1">
             <h4 class="font-pixel text-xs text-latte-mauve font-bold mb-2">MACRO SLOTS (1-16)</h4>
             <div class="max-h-60 overflow-y-auto flex flex-col gap-1">
@@ -577,7 +756,6 @@
             </div>
           </div>
 
-          <!-- Macro Action Timeline Editor -->
           <div class="md:col-span-3 pixel-box bg-latte-mantle p-4 flex flex-col justify-between gap-4">
             <div>
               <div class="flex items-center justify-between mb-3 border-b border-latte-surface1 pb-2">
@@ -601,7 +779,6 @@
                 </div>
               </div>
 
-              <!-- Action List -->
               <div class="flex flex-col gap-1.5 max-h-52 overflow-y-auto pr-1">
                 <template x-for="(act, aIdx) in macros[activeMacroSlot].actions" :key="aIdx">
                   <div class="p-2 bg-latte-base border border-latte-text flex items-center justify-between text-xs">
@@ -642,17 +819,15 @@
         </div>
       </div>
 
-      <!-- Panel 5: Presets Vault (HTMX Powered) -->
+      <!-- Panel 7: Presets Vault (HTMX Powered) -->
       <div x-show="activeTab === 'presets'" class="flex flex-col gap-4">
         
-        <!-- Action header: Save current config as new preset -->
         <div class="pixel-box bg-latte-mantle p-4 flex flex-col md:flex-row items-center justify-between gap-3">
           <div>
             <h3 class="font-pixel text-xs text-latte-mauve font-bold">SAVE CURRENT SETUP AS PRESET</h3>
             <p class="text-[10px] text-latte-subtext0">Captures all 4 layers, RGB lighting, Rapid Trigger settings, and base config.</p>
           </div>
 
-          <!-- Create Preset Form -->
           <form hx-post="{{ route('presets.store') }}"
                 hx-target="#presets-list"
                 class="flex flex-wrap items-center gap-2">
@@ -685,9 +860,7 @@
           </form>
         </div>
 
-        <!-- Filter bar & Import Form -->
         <div class="flex flex-wrap items-center justify-between gap-3">
-          <!-- Category filters via htmx -->
           <div class="flex items-center gap-1">
             <span class="font-pixel text-[10px] text-latte-subtext0 mr-1">FILTER:</span>
             <button type="button"
@@ -719,7 +892,6 @@
             </button>
           </div>
 
-          <!-- JSON File Import Form -->
           <form action="{{ route('presets.import') }}"
                 method="POST"
                 enctype="multipart/form-data"
@@ -737,22 +909,19 @@
           </form>
         </div>
 
-        <!-- Preset Cards Grid (Target of htmx swaps) -->
         <div id="presets-list">
           @include('presets._list', ['presets' => $presets])
         </div>
 
       </div>
 
-      <!-- Panel 6: Hardware Settings & Gaming Options -->
+      <!-- Panel 8: Hardware Settings & Gaming Options -->
       <div x-show="activeTab === 'settings'" class="flex flex-col gap-5">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
           
-          <!-- Polling & Debounce -->
           <div class="pixel-box bg-latte-mantle p-4 flex flex-col gap-4">
             <h3 class="font-pixel text-xs text-latte-mauve font-bold">COMMUNICATION & TIMING</h3>
 
-            <!-- Report Rate -->
             <div class="flex flex-col gap-1">
               <span class="text-[10px] font-pixel">POLLING RATE</span>
               <div class="grid grid-cols-4 gap-2 mt-1">
@@ -767,7 +936,6 @@
               </div>
             </div>
 
-            <!-- Sleep Timer -->
             <div class="flex flex-col gap-1">
               <div class="flex justify-between text-[10px] font-pixel">
                 <span>RGB SLEEP TIMER</span>
@@ -782,7 +950,6 @@
                      class="pixel-slider">
             </div>
 
-            <!-- Debounce -->
             <div class="flex flex-col gap-1">
               <div class="flex justify-between text-[10px] font-pixel">
                 <span>DEBOUNCE FILTER</span>
@@ -798,7 +965,6 @@
             </div>
           </div>
 
-          <!-- Locks, Modes & Calibration Wizard -->
           <div class="pixel-box bg-latte-mantle p-4 flex flex-col justify-between gap-4">
             <div>
               <h3 class="font-pixel text-xs text-latte-mauve font-bold mb-3">GAMING LOCKS & SYSTEM</h3>
@@ -837,7 +1003,6 @@
                 </label>
               </div>
 
-              <!-- Hall Effect Sensor Calibration Wizard -->
               <div class="mt-4 pt-3 border-t border-latte-surface1">
                 <h4 class="font-pixel text-[10px] text-latte-teal font-bold mb-1">HALL SENSOR CALIBRATION</h4>
                 <p class="text-[9px] text-latte-subtext0 mb-2">Recalibrates magnetic range for all 61 keys. Run if any switch fails to trigger.</p>
@@ -871,7 +1036,7 @@
         </div>
       </div>
 
-      <!-- Panel 7: Official Firmware Proxy & Updater -->
+      <!-- Panel 9: Official Firmware Proxy & Updater -->
       <div x-show="activeTab === 'firmware'" class="flex flex-col gap-4">
         <div class="pixel-box bg-latte-mantle p-5 flex flex-col gap-4">
           <div class="flex items-start justify-between gap-4">
@@ -886,7 +1051,6 @@
             </span>
           </div>
 
-          <!-- Official Firmware Details -->
           <div class="grid grid-cols-1 md:grid-cols-3 gap-3 p-3 bg-latte-base border-2 border-latte-surface1 text-[10px]">
             <div>
               <span class="font-pixel text-[9px] text-latte-subtext0 block">OFFICIAL IMAGE:</span>
@@ -902,7 +1066,6 @@
             </div>
           </div>
 
-          <!-- Strict Safety Notice -->
           <div class="p-3 bg-latte-peach/15 border-2 border-latte-peach text-[10px] flex items-start gap-2.5">
             <x-pixel-icon name="square-alert" class="w-5 h-5 text-latte-peach flex-shrink-0" />
             <div>
@@ -913,7 +1076,6 @@
             </div>
           </div>
 
-          <!-- Actions -->
           <div class="flex flex-wrap items-center justify-between gap-3 pt-2">
             <a href="{{ route('firmware.download') }}"
                class="pixel-btn-secondary text-[10px] flex items-center gap-1.5"
